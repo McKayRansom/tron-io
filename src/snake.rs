@@ -2,7 +2,7 @@ use macroquad::prelude::*;
 
 use std::collections::LinkedList;
 
-const SQUARES: i16 = 16;
+const SQUARES: i16 = 32;
 
 type Point = (i16, i16);
 
@@ -12,7 +12,7 @@ struct Snake {
     dir: Point,
 }
 
-#[macroquad::main("Snake")]
+// #[macroquad::main("Snake")]
 pub async fn main() {
     let mut snake = Snake {
         head: (0, 0),
@@ -21,7 +21,7 @@ pub async fn main() {
     };
     let mut fruit: Point = (rand::gen_range(0, SQUARES), rand::gen_range(0, SQUARES));
     let mut score = 0;
-    let mut speed = 0.3;
+    let speed = 0.05;
     let mut last_update = get_time();
     let mut navigation_lock = false;
     let mut game_over = false;
@@ -33,16 +33,16 @@ pub async fn main() {
 
     loop {
         if !game_over {
-            if is_key_down(KeyCode::Right) && snake.dir != left && !navigation_lock {
+            if (is_key_down(KeyCode::Right) || is_key_down(KeyCode::D)) && snake.dir != left && !navigation_lock {
                 snake.dir = right;
                 navigation_lock = true;
-            } else if is_key_down(KeyCode::Left) && snake.dir != right && !navigation_lock {
+            } else if (is_key_down(KeyCode::Left) || is_key_down(KeyCode::A))&& snake.dir != right && !navigation_lock {
                 snake.dir = left;
                 navigation_lock = true;
-            } else if is_key_down(KeyCode::Up) && snake.dir != down && !navigation_lock {
+            } else if (is_key_down(KeyCode::Up) || is_key_down(KeyCode::W)) && snake.dir != down && !navigation_lock {
                 snake.dir = up;
                 navigation_lock = true;
-            } else if is_key_down(KeyCode::Down) && snake.dir != up && !navigation_lock {
+            } else if (is_key_down(KeyCode::Down) || is_key_down(KeyCode::S)) && snake.dir != up && !navigation_lock {
                 snake.dir = down;
                 navigation_lock = true;
             }
@@ -54,10 +54,10 @@ pub async fn main() {
                 if snake.head == fruit {
                     fruit = (rand::gen_range(0, SQUARES), rand::gen_range(0, SQUARES));
                     score += 100;
-                    speed *= 0.9;
-                } else {
-                    snake.body.pop_back();
-                }
+                    // speed *= 0.9;
+                } // else {
+                    // snake.body.pop_back();
+                // }
                 if snake.head.0 < 0
                     || snake.head.1 < 0
                     || snake.head.0 >= SQUARES
@@ -154,7 +154,7 @@ pub async fn main() {
                 };
                 fruit = (rand::gen_range(0, SQUARES), rand::gen_range(0, SQUARES));
                 score = 0;
-                speed = 0.3;
+                // speed = 0.3;
                 last_update = get_time();
                 game_over = false;
             }
