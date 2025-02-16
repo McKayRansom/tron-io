@@ -1,8 +1,20 @@
+use game::Game;
+use macroquad::window::next_frame;
+
 
 mod snake;
+mod game;
 
 
-#[macroquad::main("Snake")]
+#[macroquad::main("Tron-IO")]
 async fn main() {
-    snake::main().await;
+
+    let mut game = Game::new();
+
+    loop {
+        if game.update() {
+            game = Game::new();
+        }
+        next_frame().await;
+    }
 }

@@ -2,163 +2,145 @@ use macroquad::prelude::*;
 
 use std::collections::LinkedList;
 
-const SQUARES: i16 = 32;
+pub type Point = (i16, i16);
 
-type Point = (i16, i16);
+pub const UP: Point = (0, -1);
+pub const DOWN: Point = (0, 1);
+pub const RIGHT: Point = (1, 0);
+pub const LEFT: Point = (-1, 0);
 
-struct Snake {
-    head: Point,
-    body: LinkedList<Point>,
-    dir: Point,
+pub const DIRS: &[Point] = &[UP, DOWN, LEFT, RIGHT];
+
+pub const SQUARES: i16 = 80;
+
+pub struct Grid {
+    occupied: Vec<Vec<bool>>,
+
+    game_size: f32,
+    offset_x: f32,
+    offset_y: f32,
+    sq_size: f32,
 }
 
-// #[macroquad::main("Snake")]
-pub async fn main() {
-    let mut snake = Snake {
-        head: (0, 0),
-        dir: (1, 0),
-        body: LinkedList::new(),
-    };
-    let mut fruit: Point = (rand::gen_range(0, SQUARES), rand::gen_range(0, SQUARES));
-    let mut score = 0;
-    let speed = 0.05;
-    let mut last_update = get_time();
-    let mut navigation_lock = false;
-    let mut game_over = false;
+impl Grid {
+    pub fn new() -> Self {
+        let mut grid: Grid = Self {
+            occupied: vec![vec![false; SQUARES as usize]; SQUARES as usize],
+            game_size: 0.,
+            offset_x: 0.,
+            offset_y: 0.,
+            sq_size: 0.,
+        };
+        grid.update_size();
+        grid
+    }
 
-    let up = (0, -1);
-    let down = (0, 1);
-    let right = (1, 0);
-    let left = (-1, 0);
+    pub fn update_size(&mut self) {
+        self.game_size = screen_width().min(screen_height());
+        self.offset_x = (screen_width() - self.game_size) / 2. + 10.;
+        self.offset_y = (screen_height() - self.game_size) / 2. + 10.;
+        self.sq_size = (screen_height() - self.offset_y * 2.) / SQUARES as f32;
+    }
 
-    loop {
-        if !game_over {
-            if (is_key_down(KeyCode::Right) || is_key_down(KeyCode::D)) && snake.dir != left && !navigation_lock {
-                snake.dir = right;
-                navigation_lock = true;
-            } else if (is_key_down(KeyCode::Left) || is_key_down(KeyCode::A))&& snake.dir != right && !navigation_lock {
-                snake.dir = left;
-                navigation_lock = true;
-            } else if (is_key_down(KeyCode::Up) || is_key_down(KeyCode::W)) && snake.dir != down && !navigation_lock {
-                snake.dir = up;
-                navigation_lock = true;
-            } else if (is_key_down(KeyCode::Down) || is_key_down(KeyCode::S)) && snake.dir != up && !navigation_lock {
-                snake.dir = down;
-                navigation_lock = true;
+    pub fn draw(&self) {
+        draw_rectangle(
+            self.offset_x,
+            self.offset_y,
+            self.game_size - 20.,
+            self.game_size - 20.,
+            BLACK,
+        );
+
+        for i in 0..SQUARES + 1 {
+            if i % 4 != 0 {
+                continue;
             }
-
-            if get_time() - last_update > speed {
-                last_update = get_time();
-                snake.body.push_front(snake.head);
-                snake.head = (snake.head.0 + snake.dir.0, snake.head.1 + snake.dir.1);
-                if snake.head == fruit {
-                    fruit = (rand::gen_range(0, SQUARES), rand::gen_range(0, SQUARES));
-                    score += 100;
-                    // speed *= 0.9;
-                } // else {
-                    // snake.body.pop_back();
-                // }
-                if snake.head.0 < 0
-                    || snake.head.1 < 0
-                    || snake.head.0 >= SQUARES
-                    || snake.head.1 >= SQUARES
-                {
-                    game_over = true;
-                }
-                for (x, y) in &snake.body {
-                    if *x == snake.head.0 && *y == snake.head.1 {
-                        game_over = true;
-                    }
-                }
-                navigation_lock = false;
-            }
-        }
-        if !game_over {
-            clear_background(LIGHTGRAY);
-
-            let game_size = screen_width().min(screen_height());
-            let offset_x = (screen_width() - game_size) / 2. + 10.;
-            let offset_y = (screen_height() - game_size) / 2. + 10.;
-            let sq_size = (screen_height() - offset_y * 2.) / SQUARES as f32;
-
-            draw_rectangle(offset_x, offset_y, game_size - 20., game_size - 20., WHITE);
-
-            for i in 1..SQUARES {
-                draw_line(
-                    offset_x,
-                    offset_y + sq_size * i as f32,
-                    screen_width() - offset_x,
-                    offset_y + sq_size * i as f32,
-                    2.,
-                    LIGHTGRAY,
-                );
-            }
-
-            for i in 1..SQUARES {
-                draw_line(
-                    offset_x + sq_size * i as f32,
-                    offset_y,
-                    offset_x + sq_size * i as f32,
-                    screen_height() - offset_y,
-                    2.,
-                    LIGHTGRAY,
-                );
-            }
-
-            draw_rectangle(
-                offset_x + snake.head.0 as f32 * sq_size,
-                offset_y + snake.head.1 as f32 * sq_size,
-                sq_size,
-                sq_size,
-                DARKGREEN,
-            );
-
-            for (x, y) in &snake.body {
-                draw_rectangle(
-                    offset_x + *x as f32 * sq_size,
-                    offset_y + *y as f32 * sq_size,
-                    sq_size,
-                    sq_size,
-                    LIME,
-                );
-            }
-
-            draw_rectangle(
-                offset_x + fruit.0 as f32 * sq_size,
-                offset_y + fruit.1 as f32 * sq_size,
-                sq_size,
-                sq_size,
-                GOLD,
-            );
-
-            draw_text(format!("SCORE: {score}").as_str(), 10., 20., 20., DARKGRAY);
-        } else {
-            clear_background(WHITE);
-            let text = "Game Over. Press [enter] to play again.";
-            let font_size = 30.;
-            let text_size = measure_text(text, None, font_size as _, 1.0);
-
-            draw_text(
-                text,
-                screen_width() / 2. - text_size.width / 2.,
-                screen_height() / 2. + text_size.height / 2.,
-                font_size,
+            draw_line(
+                self.offset_x,
+                self.offset_y + self.sq_size * i as f32,
+                screen_width() - self.offset_x,
+                self.offset_y + self.sq_size * i as f32,
+                2.,
                 DARKGRAY,
             );
-
-            if is_key_down(KeyCode::Enter) {
-                snake = Snake {
-                    head: (0, 0),
-                    dir: (1, 0),
-                    body: LinkedList::new(),
-                };
-                fruit = (rand::gen_range(0, SQUARES), rand::gen_range(0, SQUARES));
-                score = 0;
-                // speed = 0.3;
-                last_update = get_time();
-                game_over = false;
-            }
         }
-        next_frame().await;
+
+        for i in 0..SQUARES + 1 {
+            if i % 4 != 0 {
+                continue;
+            }
+            draw_line(
+                self.offset_x + self.sq_size * i as f32,
+                self.offset_y,
+                self.offset_x + self.sq_size * i as f32,
+                screen_height() - self.offset_y,
+                2.,
+                DARKGRAY,
+            );
+        }
+    }
+
+    pub fn draw_cell(&self, pos: Point, color: Color) {
+        draw_rectangle(
+            self.offset_x + pos.0 as f32 * self.sq_size,
+            self.offset_y + pos.1 as f32 * self.sq_size,
+            self.sq_size,
+            self.sq_size,
+            color,
+        );
+    }
+
+    pub fn occupy(&mut self, pos: Point) -> bool {
+        if pos.0 < 0 || pos.1 < 0 || pos.0 >= SQUARES || pos.1 >= SQUARES {
+            return true;
+        }
+
+        if self.occupied[pos.1 as usize][pos.0 as usize] {
+            return true;
+        }
+        self.occupied[pos.1 as usize][pos.0 as usize] = true;
+        return false;
+    }
+}
+
+pub struct Snake {
+    pub head: Point,
+    pub body: LinkedList<Point>,
+    pub dir: Point,
+    pub head_color: Color,
+    pub body_color: Color,
+}
+
+impl Snake {
+    pub fn update(&mut self, grid: &mut Grid, is_ai: bool) -> bool {
+        self.body.push_front(self.head);
+
+        let new_head = (self.head.0 + self.dir.0, self.head.1 + self.dir.1);
+
+        if grid.occupy(new_head) {
+
+            if is_ai {
+                for dir in DIRS {
+                    let new_head = (self.head.0 + dir.0, self.head.1 + dir.1);
+                    if !grid.occupy(new_head) {
+                        self.head = new_head;
+                        return false;
+                    }
+                }
+                
+            }
+            return true; 
+        }
+
+        self.head = new_head;
+        false
+    }
+
+    pub fn draw(&self, grid: &Grid) {
+        grid.draw_cell(self.head, self.head_color);
+
+        for pos in &self.body {
+            grid.draw_cell(*pos, self.body_color);
+        }
     }
 }
