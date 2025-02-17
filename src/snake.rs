@@ -124,6 +124,7 @@ impl Snake {
                     let new_head = (self.head.0 + dir.0, self.head.1 + dir.1);
                     if !grid.occupy(new_head) {
                         self.head = new_head;
+                        self.dir = *dir;
                         return false;
                     }
                 }
