@@ -13,7 +13,7 @@ pub struct Game {
     last_update: f64,
     navigation_lock: bool,
     game_over: bool,
-    game_won: bool,
+    pub game_won: bool,
 }
 
 impl Game {
@@ -35,20 +35,20 @@ impl Game {
                     head_color: PINK,
                     body_color: MAROON,
                 },
-                Snake {
-                    head: (SQUARES / 2, 11),
-                    dir: (0, 1),
-                    body: LinkedList::new(),
-                    head_color: LIME,
-                    body_color: DARKGREEN,
-                },
-                Snake {
-                    head: (SQUARES / 2, SQUARES - 11),
-                    dir: (0, -1),
-                    body: LinkedList::new(),
-                    head_color: YELLOW,
-                    body_color: GOLD,
-                },
+                // Snake {
+                //     head: (SQUARES / 2, 11),
+                //     dir: (0, 1),
+                //     body: LinkedList::new(),
+                //     head_color: LIME,
+                //     body_color: DARKGREEN,
+                // },
+                // Snake {
+                //     head: (SQUARES / 2, SQUARES - 11),
+                //     dir: (0, -1),
+                //     body: LinkedList::new(),
+                //     head_color: YELLOW,
+                //     body_color: GOLD,
+                // },
             ],
 
             // let mut fruit: Point = (rand::gen_range(0, SQUARES), rand::gen_range(0, SQUARES));
@@ -61,7 +61,7 @@ impl Game {
         }
     }
 
-    pub fn update(&mut self) -> bool {
+    pub fn update(&mut self, won: u32, lost: u32) -> bool {
         if !self.game_over {
             if (is_key_down(KeyCode::Right) || is_key_down(KeyCode::D))
                 && self.snakes[0].dir != LEFT
@@ -125,6 +125,8 @@ impl Game {
         for snake in &self.snakes {
             snake.draw(&self.grid);
         }
+
+        draw_text(format!("Score: Won: {won} Lost: {lost}").as_str(), 10., 20., 20., WHITE);
 
         if self.game_over {
             // clear_background(BLACK);

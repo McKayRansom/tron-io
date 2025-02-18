@@ -11,8 +11,16 @@ async fn main() {
 
     let mut game = Game::new();
 
+    let mut won = 0;
+    let mut lost = 0;
+
     loop {
-        if game.update() {
+        if game.update(won, lost) {
+            if game.game_won {
+                won += 1;
+            } else {
+                lost += 1;
+            }
             game = Game::new();
         }
         next_frame().await;

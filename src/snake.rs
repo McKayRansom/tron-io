@@ -10,6 +10,7 @@ pub const RIGHT: Point = (1, 0);
 pub const LEFT: Point = (-1, 0);
 
 pub const DIRS: &[Point] = &[UP, DOWN, LEFT, RIGHT];
+pub const DIRS_REV: &[Point] = &[RIGHT, LEFT, DOWN, UP];
 
 pub const SQUARES: i16 = 80;
 
@@ -118,9 +119,13 @@ impl Snake {
         let new_head = (self.head.0 + self.dir.0, self.head.1 + self.dir.1);
 
         if grid.occupy(new_head) {
-
             if is_ai {
-                for dir in DIRS {
+                let dirs = if rand::RandomRange::gen_range(0, 2) == 0 {
+                    DIRS
+                } else {
+                    DIRS_REV
+                };
+                for dir in dirs {
                     let new_head = (self.head.0 + dir.0, self.head.1 + dir.1);
                     if !grid.occupy(new_head) {
                         self.head = new_head;
@@ -128,9 +133,8 @@ impl Snake {
                         return false;
                     }
                 }
-                
             }
-            return true; 
+            return true;
         }
 
         self.head = new_head;
