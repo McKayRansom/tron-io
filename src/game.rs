@@ -117,7 +117,7 @@ impl Game {
         player_color.g *= 0.5;
         player_color.b *= 0.5;
 
-        clear_background(player_color);
+        clear_background(BLACK);
 
         self.grid.update_size();
         self.grid.draw();
@@ -126,7 +126,7 @@ impl Game {
             snake.draw(&self.grid);
         }
 
-        draw_text(format!("Score: Won: {won} Lost: {lost}").as_str(), 10., 20., 20., WHITE);
+        draw_text(format!("Score: Won: {won} Lost: {lost}").as_str(), 10., 20., 20., GREEN);
 
         if self.game_over {
             // clear_background(BLACK);
