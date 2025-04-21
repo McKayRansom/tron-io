@@ -1,13 +1,16 @@
 use std::collections::LinkedList;
 
+use macroquad::color::colors;
 use macroquad::prelude::*;
 
-use crate::snake::{DOWN, Grid, LEFT, RIGHT, SQUARES, Snake, UP};
+use crate::bike::{Bike, DOWN, LEFT, RIGHT, UP};
+use crate::context::Context;
+use crate::grid::{Grid, SQUARES};
 
 pub struct Game {
     grid: Grid,
 
-    snakes: Vec<Snake>,
+    snakes: Vec<Bike>,
 
     speed: f64,
     last_update: f64,
@@ -21,19 +24,19 @@ impl Game {
         Self {
             grid: Grid::new(),
             snakes: vec![
-                Snake {
+                Bike {
                     head: (8, SQUARES / 2),
                     dir: (1, 0),
                     body: LinkedList::new(),
                     head_color: SKYBLUE,
-                    body_color: DARKBLUE,
+                    body_color: colors::BLUE, // DARKBLUE,
                 },
-                Snake {
+                Bike {
                     head: (SQUARES - 9, SQUARES / 2),
                     dir: (-1, 0),
                     body: LinkedList::new(),
                     head_color: PINK,
-                    body_color: MAROON,
+                    body_color: colors::RED, //MAROON,
                 },
                 // Snake {
                 //     head: (SQUARES / 2, 11),
@@ -61,7 +64,7 @@ impl Game {
         }
     }
 
-    pub fn update(&mut self, won: u32, lost: u32) -> bool {
+    pub fn update(&mut self, won: u32, lost: u32, context: &Context) -> bool {
         if !self.game_over {
             if (is_key_down(KeyCode::Right) || is_key_down(KeyCode::D))
                 && self.snakes[0].dir != LEFT
@@ -126,7 +129,17 @@ impl Game {
             snake.draw(&self.grid);
         }
 
-        draw_text(format!("Score: Won: {won} Lost: {lost}").as_str(), 10., 20., 20., GREEN);
+        draw_text_ex(
+            format!("Score: Won: {won} Lost: {lost}").as_str(),
+            10.,
+            20.,
+            TextParams {
+                font: Some(&context.font),
+                font_size: 20,
+                color: colors::GREEN,
+                ..Default::default()
+            },
+        );
 
         if self.game_over {
             // clear_background(BLACK);
@@ -138,12 +151,16 @@ impl Game {
             let font_size = 30.;
             let text_size = measure_text(text, None, font_size as _, 1.0);
 
-            draw_text(
+            draw_text_ex(
                 text,
                 screen_width() / 2. - text_size.width / 2.,
                 screen_height() / 2. + text_size.height / 2.,
-                font_size,
-                WHITE,
+                TextParams {
+                    font: Some(&context.font),
+                    font_size: font_size as u16,
+                    color: colors::WHITE,
+                    ..Default::default()
+                },
             );
 
             if is_key_down(KeyCode::Enter) {
