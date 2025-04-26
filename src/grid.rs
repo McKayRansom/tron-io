@@ -1,9 +1,13 @@
+use bike::Bike;
 use macroquad::{
     color::{Color, colors},
     math::Vec2,
     shapes::{draw_line, draw_rectangle},
     window::{screen_height, screen_width},
 };
+
+pub mod bike;
+pub mod msg;
 
 pub const SQUARES: i16 = 80;
 
@@ -40,15 +44,44 @@ impl Cell {
             colors::WHITE
         }
     }
-    
+
     fn free(&mut self, id: u8) {
         assert_eq!(self.val & 0b01111111, id);
         self.val &= 0b01111111;
     }
 }
 
-pub struct Grid {
+pub struct Occupied {
     occupied: Vec<Vec<Cell>>,
+}
+
+impl Occupied {
+    pub fn new() -> Self {
+        Self {
+            occupied: vec![vec![Cell::new(); SQUARES as usize]; SQUARES as usize],
+        }
+    }
+
+    pub fn occupy(&mut self, pos: Point, id: u8) -> bool {
+        if pos.0 < 0 || pos.1 < 0 || pos.0 >= SQUARES || pos.1 >= SQUARES {
+            return true;
+        }
+
+        if self.occupied[pos.1 as usize][pos.0 as usize].is_occupied() {
+            return true;
+        }
+        self.occupied[pos.1 as usize][pos.0 as usize].occupy(id, true);
+        return false;
+    }
+
+    pub(crate) fn free(&mut self, pos: (i16, i16), id: u8) {
+        self.occupied[pos.1 as usize][pos.0 as usize].free(id);
+    }
+}
+
+pub struct Grid {
+    pub bikes: Vec<Bike>,
+    pub occupied: Occupied,
 }
 
 pub struct GridDrawInfo {
@@ -63,9 +96,9 @@ const MARGIN: f32 = 10.;
 impl GridDrawInfo {
     pub fn new() -> Self {
         let game_size = screen_width().min(screen_height()) - MARGIN * 2.;
-        let offset_x = (screen_width() - game_size) / 2. + MARGIN;
-        let offset_y = (screen_height() - game_size) / 2. + MARGIN;
-        let sq_size = (screen_height() - offset_y * 2.) / SQUARES as f32;
+        let offset_x = (screen_width() - game_size) / 2.;
+        let offset_y = (screen_height() - game_size) / 2.;
+        let sq_size = game_size / SQUARES as f32;
 
         Self {
             game_size,
@@ -96,12 +129,40 @@ const PLAYER_COLOR_LOOKUP: &[Color] = &[
     colors::GOLD,
 ];
 
-
+pub enum UpdateResult {
+    GameOver,
+    GameWon,
+    InProgress,
+}
 
 impl Grid {
     pub fn new() -> Self {
-        Self {
-            occupied: vec![vec![Cell::new(); SQUARES as usize]; SQUARES as usize],
+        let mut occupied = Occupied::new();
+        let bikes = vec![
+            Bike::new(&mut occupied, 1, (8, SQUARES / 2), bike::RIGHT),
+            Bike::new(&mut occupied, 2, (SQUARES - 9, SQUARES / 2), bike::LEFT),
+            Bike::new(&mut occupied, 3, (SQUARES / 2, 11), bike::DOWN),
+            Bike::new(&mut occupied, 4, (SQUARES / 2, SQUARES - 11), bike::UP),
+        ];
+        Self { bikes, occupied }
+    }
+
+    pub fn update(&mut self) -> UpdateResult {
+        let mut all_snakes_dead = true;
+        for (i, bike) in self.bikes.iter_mut().enumerate() {
+            if bike.update(&mut self.occupied, i != 0) {
+                if i == 0 {
+                    // player died
+                    return UpdateResult::GameOver;
+                }
+            } else if i != 0 {
+                all_snakes_dead = false;
+            }
+        }
+        if all_snakes_dead {
+            UpdateResult::GameWon
+        } else {
+            UpdateResult::InProgress
         }
     }
 
@@ -141,33 +202,17 @@ impl Grid {
         }
         for y in 0..SQUARES {
             for x in 0..SQUARES {
-                if self.occupied[y as usize][x as usize].is_occupied() {
+                if self.occupied.occupied[y as usize][x as usize].is_occupied() {
                     let point = draw_info.grid_to_screen((x, y));
                     draw_rectangle(
                         point.x,
                         point.y,
                         draw_info.sq_size,
                         draw_info.sq_size,
-                        self.occupied[y as usize][x as usize].color()
+                        self.occupied.occupied[y as usize][x as usize].color(),
                     );
                 }
             }
         }
-    }
-
-    pub fn occupy(&mut self, pos: Point, id: u8) -> bool {
-        if pos.0 < 0 || pos.1 < 0 || pos.0 >= SQUARES || pos.1 >= SQUARES {
-            return true;
-        }
-
-        if self.occupied[pos.1 as usize][pos.0 as usize].is_occupied() {
-            return true;
-        }
-        self.occupied[pos.1 as usize][pos.0 as usize].occupy(id, true);
-        return false;
-    }
-
-    pub(crate) fn free(&mut self, pos: (i16, i16), id: u8) {
-        self.occupied[pos.1 as usize][pos.0 as usize].free(id);
     }
 }

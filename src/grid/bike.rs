@@ -1,5 +1,7 @@
 use macroquad::rand;
-use crate::grid::{Grid, Point};
+use crate::grid::Point;
+
+use super::Occupied;
 
 
 pub const UP: Point = (0, -1);
@@ -17,12 +19,12 @@ pub struct Bike {
 }
 
 impl Bike {
-    pub fn new(grid: &mut Grid, id: u8, head: Point, dir: Point) -> Self {
+    pub fn new(grid: &mut Occupied, id: u8, head: Point, dir: Point) -> Self {
         assert!(!grid.occupy(head, id));
         Self { id, head, dir }
     }
 
-    pub fn update(&mut self, grid: &mut Grid, is_ai: bool) -> bool {
+    pub fn update(&mut self, grid: &mut Occupied, is_ai: bool) -> bool {
         
         grid.free(self.head, self.id);
 
