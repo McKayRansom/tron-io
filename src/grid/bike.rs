@@ -12,6 +12,7 @@ pub const LEFT: Point = (-1, 0);
 pub const DIRS: &[Point] = &[UP, DOWN, LEFT, RIGHT];
 pub const DIRS_REV: &[Point] = &[RIGHT, LEFT, DOWN, UP];
 
+#[derive(Hash, Eq, PartialEq, Debug)]
 pub struct Bike {
     pub id: u8,
     pub head: Point,

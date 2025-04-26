@@ -1,3 +1,5 @@
+use std::hash::{DefaultHasher, Hash, Hasher};
+
 use bike::Bike;
 use macroquad::{
     color::{Color, colors},
@@ -149,7 +151,9 @@ impl Grid {
 
     pub fn update(&mut self) -> UpdateResult {
         let mut all_snakes_dead = true;
+        let mut hasher = DefaultHasher::new();
         for (i, bike) in self.bikes.iter_mut().enumerate() {
+            
             if bike.update(&mut self.occupied, i != 0) {
                 if i == 0 {
                     // player died
@@ -158,7 +162,13 @@ impl Grid {
             } else if i != 0 {
                 all_snakes_dead = false;
             }
+
+            // Compute hash for the bike
+            bike.hash(&mut hasher);
+            // println!("Bike {} hash: {}", i, bike_hash); // Replace with appropriate logging if needed
+
         }
+        let _bike_hash = hasher.finish();
         if all_snakes_dead {
             UpdateResult::GameWon
         } else {

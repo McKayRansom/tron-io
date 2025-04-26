@@ -1,16 +1,17 @@
 use macroquad::color::colors;
 use macroquad::prelude::*;
+use tron_io::grid::msg::BikeUpdate;
 
-use tron_io::grid::bike::{DOWN, LEFT, RIGHT, UP};
 use crate::context::Context;
-use tron_io::grid::Grid;
+use tron_io::grid::bike::{Bike, DOWN, LEFT, RIGHT, UP};
+use tron_io::grid::{Grid, Point};
 
 pub struct Game {
     grid: Grid,
 
     speed: f64,
     last_update: f64,
-    navigation_lock: bool,
+    player_update: Option<BikeUpdate>,
     game_over: bool,
     pub game_won: bool,
 }
@@ -24,42 +25,51 @@ impl Game {
             // let mut score = 0;
             speed: 0.05,
             last_update: get_time(),
-            navigation_lock: false,
+            player_update: None,
             game_over: false,
             game_won: true,
         }
     }
 
+    fn update_player_input(&self) -> Option<Point> {
+        if (is_key_down(KeyCode::Right) || is_key_down(KeyCode::D))
+            && self.grid.bikes[0].dir != LEFT
+        {
+            Some(RIGHT)
+        } else if (is_key_down(KeyCode::Left) || is_key_down(KeyCode::A))
+            && self.grid.bikes[0].dir != RIGHT
+        {
+            Some(LEFT)
+        } else if (is_key_down(KeyCode::Up) || is_key_down(KeyCode::W))
+            && self.grid.bikes[0].dir != DOWN
+        {
+            Some(UP)
+        } else if (is_key_down(KeyCode::Down) || is_key_down(KeyCode::S))
+            && self.grid.bikes[0].dir != UP
+        {
+            Some(DOWN)
+        } else {
+            None
+        }
+    }
+
     pub fn update(&mut self, won: u32, lost: u32, context: &Context) -> bool {
         if !self.game_over {
-            if (is_key_down(KeyCode::Right) || is_key_down(KeyCode::D))
-                && self.grid.bikes[0].dir != LEFT
-                && !self.navigation_lock
-            {
-                self.grid.bikes[0].dir = RIGHT;
-                self.navigation_lock = true;
-            } else if (is_key_down(KeyCode::Left) || is_key_down(KeyCode::A))
-                && self.grid.bikes[0].dir != RIGHT
-                && !self.navigation_lock
-            {
-                self.grid.bikes[0].dir = LEFT;
-                self.navigation_lock = true;
-            } else if (is_key_down(KeyCode::Up) || is_key_down(KeyCode::W))
-                && self.grid.bikes[0].dir != DOWN
-                && !self.navigation_lock
-            {
-                self.grid.bikes[0].dir = UP;
-                self.navigation_lock = true;
-            } else if (is_key_down(KeyCode::Down) || is_key_down(KeyCode::S))
-                && self.grid.bikes[0].dir != UP
-                && !self.navigation_lock
-            {
-                self.grid.bikes[0].dir = DOWN;
-                self.navigation_lock = true;
+            if self.player_update.is_none() {
+                if let Some(dir) = self.update_player_input() {
+                    self.player_update = Some(BikeUpdate::new(1, dir));
+                    // self.grid.bikes[0].dir = dir;
+                    // self.grid.bikes[0].update(&mut self.grid.occupied, false);
+                }
             }
 
             if get_time() - self.last_update > self.speed {
                 self.last_update = get_time();
+
+                if let Some(update) = self.player_update.take() {
+                    // self.grid.bikes[0].dir = update.dir;
+                    self.grid.apply_update(&update);
+                }
 
                 match self.grid.update() {
                     // GameOver
@@ -75,8 +85,6 @@ impl Game {
                     // InProgress
                     tron_io::grid::UpdateResult::InProgress => {}
                 }
-
-                self.navigation_lock = false;
             }
         }
 
@@ -102,9 +110,14 @@ impl Game {
         );
 
         if self.game_over {
-            // clear_background(BLACK);
+            draw_rectangle(0., 0., screen_width(), screen_height(), Color {
+                r: 0.,
+                g: 0.,
+                b: 0.,
+                a: 0.5,
+            });
             let text = if self.game_won {
-                "Game Won! Press [enter] to play agin."
+                "Game Won! Press [enter] to play again."
             } else {
                 "Game Over. Press [enter] to play again."
             };

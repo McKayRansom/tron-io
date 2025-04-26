@@ -26,7 +26,7 @@ pub fn main() -> std::io::Result<()> {
         quad_net::quad_socket::server::Settings {
             on_message: {
                 let world = world.clone();
-                move |mut _out, mut state: &mut ClientState, msg| {
+                move |mut _out, state: &mut ClientState, msg| {
                     let msg: (f32, f32) = DeBin::deserialize_bin(&msg).unwrap();
 
                     if state.id.is_none() {
