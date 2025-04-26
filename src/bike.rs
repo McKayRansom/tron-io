@@ -1,8 +1,4 @@
-
-use std::collections::LinkedList;
-
-use macroquad::{color::Color, rand};
-
+use macroquad::rand;
 use crate::grid::{Grid, Point};
 
 
@@ -15,20 +11,24 @@ pub const DIRS: &[Point] = &[UP, DOWN, LEFT, RIGHT];
 pub const DIRS_REV: &[Point] = &[RIGHT, LEFT, DOWN, UP];
 
 pub struct Bike {
+    pub id: u8,
     pub head: Point,
-    pub body: LinkedList<Point>,
     pub dir: Point,
-    pub head_color: Color,
-    pub body_color: Color,
 }
 
 impl Bike {
+    pub fn new(grid: &mut Grid, id: u8, head: Point, dir: Point) -> Self {
+        assert!(!grid.occupy(head, id));
+        Self { id, head, dir }
+    }
+
     pub fn update(&mut self, grid: &mut Grid, is_ai: bool) -> bool {
-        self.body.push_front(self.head);
+        
+        grid.free(self.head, self.id);
 
         let new_head = (self.head.0 + self.dir.0, self.head.1 + self.dir.1);
 
-        if grid.occupy(new_head) {
+        if grid.occupy(new_head, self.id) {
             if is_ai {
                 let dirs = if rand::RandomRange::gen_range(0, 2) == 0 {
                     DIRS
@@ -37,7 +37,7 @@ impl Bike {
                 };
                 for dir in dirs {
                     let new_head = (self.head.0 + dir.0, self.head.1 + dir.1);
-                    if !grid.occupy(new_head) {
+                    if !grid.occupy(new_head, self.id) {
                         self.head = new_head;
                         self.dir = *dir;
                         return false;
@@ -51,11 +51,4 @@ impl Bike {
         false
     }
 
-    pub fn draw(&self, grid: &Grid) {
-        grid.draw_cell(self.head, self.head_color);
-
-        for pos in &self.body {
-            grid.draw_cell(*pos, self.body_color);
-        }
-    }
 }

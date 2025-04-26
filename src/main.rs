@@ -3,9 +3,9 @@ use game::Game;
 use macroquad::window::{next_frame, Conf};
 
 
-mod bike;
+// mod bike;
 mod game;
-mod grid;
+// mod grid;
 mod context;
 
 
