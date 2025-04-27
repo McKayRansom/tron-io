@@ -1,6 +1,7 @@
 use context::Context;
 use game::Game;
 use macroquad::window::{next_frame, Conf};
+use quad_net::quad_socket::client::QuadSocket;
 
 
 // mod bike;
@@ -36,7 +37,19 @@ async fn main() {
 
     let context = Context::default().await;
 
-    let mut game = Game::new();
+    #[cfg(not(target_arch = "wasm32"))]
+    let socket = QuadSocket::connect("localhost:8090").expect("Failed to connect to server");
+    #[cfg(target_arch = "wasm32")]
+    let socket = QuadSocket::connect("ws://localhost:8091").expect("Failed to connect to server");
+
+    #[cfg(target_arch = "wasm32")]
+    {
+        while socket.is_wasm_websocket_connected() == false {
+            next_frame().await;
+        }
+    }
+
+    let mut game = Game::new(Some(socket));
 
     let mut won = 0;
     let mut lost = 0;
@@ -48,7 +61,7 @@ async fn main() {
             } else {
                 lost += 1;
             }
-            game = Game::new();
+            game = Game::new(game.socket.take());
         }
         next_frame().await;
     }

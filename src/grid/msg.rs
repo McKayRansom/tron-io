@@ -1,6 +1,9 @@
-use super::{Grid, Point};
+use super::{Grid, Point, UpdateResult};
+
+use nanoserde::{DeBin, SerBin};
 
 
+#[derive(DeBin, SerBin, Debug, Clone, Copy)]
 pub struct BikeUpdate {
     pub id: u8,
     pub dir: Point,
@@ -12,6 +15,7 @@ impl BikeUpdate {
     }
 }
 
+#[derive(DeBin, SerBin, Debug, Clone)]
 pub struct GridUpdateMsg {
     pub tick: u32,
     pub seed: u32,
@@ -26,11 +30,18 @@ impl Grid {
         // bike.update(&mut self.occupied, false);
     }
 
-    pub fn apply_updates(&mut self, updates: GridUpdateMsg) {
+    pub fn apply_updates(&mut self, updates: &GridUpdateMsg) -> UpdateResult {
         // tick and seed?
         for update in updates.updates.iter() {
             self.apply_update(update);
         }
+        if self.tick != updates.tick {
+            self.tick = updates.tick;
+            self.update()
+        } else {
+            UpdateResult::InProgress
+        }
+
     }
 }
 
@@ -55,7 +66,7 @@ mod tests {
             seed: 1234,
             updates: vec![update],
         };
-        grid.apply_updates(msg);
+        grid.apply_updates(&msg);
         // assert_eq!(msg.tick, 1);
         // assert_eq!(msg.seed, 1234);
         assert_eq!(grid.bikes[0].dir, DOWN);

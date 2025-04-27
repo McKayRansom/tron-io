@@ -1,10 +1,18 @@
 use macroquad::color::colors;
 use macroquad::prelude::*;
-use tron_io::grid::msg::BikeUpdate;
+use quad_net::quad_socket::client::QuadSocket;
+use tron_io::grid::msg::{BikeUpdate, GridUpdateMsg};
 
 use crate::context::Context;
-use tron_io::grid::bike::{Bike, DOWN, LEFT, RIGHT, UP};
+use tron_io::grid::bike::{DOWN, LEFT, RIGHT, UP};
 use tron_io::grid::{Grid, Point};
+
+#[derive(PartialEq, Eq)]
+pub enum GameState {
+    Lobby,
+    Playing,
+    GameOver,
+}
 
 pub struct Game {
     grid: Grid,
@@ -12,12 +20,14 @@ pub struct Game {
     speed: f64,
     last_update: f64,
     player_update: Option<BikeUpdate>,
-    game_over: bool,
+    // game_over: bool,
+    game_state: GameState,
     pub game_won: bool,
+    pub socket: Option<QuadSocket>,
 }
 
 impl Game {
-    pub fn new() -> Self {
+    pub fn new(socket: Option<QuadSocket>) -> Self {
         Self {
             grid: Grid::new(),
 
@@ -26,8 +36,9 @@ impl Game {
             speed: 0.05,
             last_update: get_time(),
             player_update: None,
-            game_over: false,
+            game_state: GameState::Playing,
             game_won: true,
+            socket,
         }
     }
 
@@ -54,7 +65,7 @@ impl Game {
     }
 
     pub fn update(&mut self, won: u32, lost: u32, context: &Context) -> bool {
-        if !self.game_over {
+        if self.game_state == GameState::Playing {
             if self.player_update.is_none() {
                 if let Some(dir) = self.update_player_input() {
                     self.player_update = Some(BikeUpdate::new(1, dir));
@@ -63,29 +74,53 @@ impl Game {
                 }
             }
 
-            if get_time() - self.last_update > self.speed {
-                self.last_update = get_time();
+            // if get_time() - self.last_update > self.speed {
+            // self.last_update = get_time();
 
-                if let Some(update) = self.player_update.take() {
-                    // self.grid.bikes[0].dir = update.dir;
-                    self.grid.apply_update(&update);
-                }
-
-                match self.grid.update() {
-                    // GameOver
-                    tron_io::grid::UpdateResult::GameOver => {
-                        self.game_over = true;
-                        self.game_won = false;
+            if let Some(update) = self.player_update.take() {
+                if self.grid.bikes[0].dir != update.dir {
+                    if let Some(socket) = &mut self.socket {
+                        // send update to server
+                        socket.send_bin(&GridUpdateMsg {
+                            tick: self.grid.tick,
+                            seed: 0,
+                            updates: vec![update],
+                        });
+                    } else {
+                        self.grid.apply_update(&update);
                     }
-                    // GameWon
-                    tron_io::grid::UpdateResult::GameWon => {
-                        self.game_over = true;
-                        self.game_won = true;
-                    }
-                    // InProgress
-                    tron_io::grid::UpdateResult::InProgress => {}
                 }
             }
+
+            if let Some(socket) = &mut self.socket {
+                // send update to server
+                // socket.send_bin(&self.player_update.unwrap());
+                while let Some(grid_update) = socket.try_recv_bin() {
+                    // self.grid.apply_updates(&grid_update);
+
+                    match self.grid.apply_updates(&grid_update) {
+                        // GameOver
+                        tron_io::grid::UpdateResult::GameOver => {
+                            self.game_state = GameState::GameOver;
+                            self.game_won = false;
+                        }
+                        // GameWon
+                        tron_io::grid::UpdateResult::GameWon => {
+                            self.game_state = GameState::GameOver;
+                            self.game_won = true;
+                        }
+                        // InProgress
+                        tron_io::grid::UpdateResult::InProgress => {}
+                    }
+                    socket.send_bin(&GridUpdateMsg {
+                        tick: self.grid.tick,
+                        seed: 0,
+                        updates: vec![],
+                    });
+                }
+            }
+
+            // }
         }
 
         // let mut player_color = self.bikes[0].body_color;
@@ -109,7 +144,7 @@ impl Game {
             },
         );
 
-        if self.game_over {
+        if self.game_state == GameState::GameOver {
             draw_rectangle(0., 0., screen_width(), screen_height(), Color {
                 r: 0.,
                 g: 0.,

@@ -82,6 +82,7 @@ impl Occupied {
 }
 
 pub struct Grid {
+    pub tick: u32,
     pub bikes: Vec<Bike>,
     pub occupied: Occupied,
 }
@@ -146,7 +147,7 @@ impl Grid {
             Bike::new(&mut occupied, 3, (SQUARES / 2, 11), bike::DOWN),
             Bike::new(&mut occupied, 4, (SQUARES / 2, SQUARES - 11), bike::UP),
         ];
-        Self { bikes, occupied }
+        Self { bikes, occupied, tick: 0 }
     }
 
     pub fn update(&mut self) -> UpdateResult {
