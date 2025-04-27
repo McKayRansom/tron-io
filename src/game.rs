@@ -20,7 +20,6 @@ pub struct Game {
     speed: f64,
     last_update: f64,
     player_update: Option<BikeUpdate>,
-    // game_over: bool,
     game_state: GameState,
     pub game_won: bool,
     pub socket: Option<QuadSocket>,
@@ -30,9 +29,6 @@ impl Game {
     pub fn new(socket: Option<QuadSocket>) -> Self {
         Self {
             grid: Grid::new(),
-
-            // let mut fruit: Point = (rand::gen_range(0, SQUARES), rand::gen_range(0, SQUARES));
-            // let mut score = 0;
             speed: 0.05,
             last_update: get_time(),
             player_update: None,

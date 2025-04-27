@@ -22,6 +22,25 @@ pub struct GridUpdateMsg {
     pub updates: Vec<BikeUpdate>,
 }
 
+#[derive(DeBin, SerBin, Debug, Clone)]
+pub struct JoinResponse {
+    pub id: u8,
+    pub seed: u32,
+}
+
+
+#[derive(DeBin, SerBin, Debug, Clone)]
+pub enum ServerMsg {
+    Update(GridUpdateMsg),
+    JoinResponse(JoinResponse),
+}
+
+#[derive(DeBin, SerBin, Debug, Clone)]
+pub enum ClientMsg {
+    Update(GridUpdateMsg),
+    Join,
+}
+
 impl Grid {
     pub fn apply_update(&mut self, update: &BikeUpdate) {
         // Apply the update to the grid

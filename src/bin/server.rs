@@ -5,14 +5,14 @@ use tron_io::grid::msg::{BikeUpdate, GridUpdateMsg};
 
 #[derive(Default)]
 struct ClientState {
-    id: Option<usize>,
+    id: Option<u8>,
     tick: u32,
 }
 
 struct World {
     // pos: (f32, f32),
     // last_edit_id: usize,
-    // unique_id: usize,
+    unique_id: u8,
     last_update_time: Instant,
     next_update: GridUpdateMsg,
     last_update: GridUpdateMsg,
@@ -23,7 +23,7 @@ impl World {
         Self {
             // pos: (0.0, 0.0),
             // last_edit_id: 0,
-            // unique_id: 0,
+            unique_id: 1,
             last_update_time: Instant::now(),
             next_update: GridUpdateMsg {
                 tick: 0,
@@ -55,10 +55,10 @@ pub fn main() -> std::io::Result<()> {
                     println!("Received message: {:?}", msg);
                     world.next_update.updates.append(&mut msg.updates);
                     state.tick = msg.tick;
-                    // if state.id.is_none() {
-                    //     state.id = Some(world.lock().unwrap().unique_id);
-                    //     world.lock().unwrap().unique_id += 1;
-                    // }
+                    if state.id.is_none() {
+                        state.id = Some(world.unique_id);
+                        world.unique_id += 1;
+                    }
                     // world.lock().unwrap().last_edit_id = state.id.unwrap();
                     // world.lock().unwrap().pos = msg;
                     // out.send_bin(&msg).unwrap();
