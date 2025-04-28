@@ -30,8 +30,8 @@ impl Context {
         }
     }
 
-    #[allow(dead_code)]
     pub fn update(&mut self) {
+        self.gamepads.poll();
         self.screen_size = Vec2::new(screen_width(), screen_height());
     }
 }

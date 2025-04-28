@@ -30,7 +30,6 @@ impl ServerConnectionState {
         if self.id.is_none() {
             self.id = Some(world.join());
         }
-        self.state = world.world_state;
 
         if let Some(update) = &msg.update {
             self.tick = update.tick;
@@ -45,6 +44,7 @@ impl ServerConnectionState {
         }
 
         if self.state != world.world_state {
+            self.state = world.world_state;
             send_response = true;
         }
 

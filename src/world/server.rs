@@ -1,6 +1,9 @@
-use std::time::{Duration, Instant};
+use std::time::{Duration, Instant, SystemTime};
 
-use crate::grid::{msg::{BikeUpdate, GridUpdateMsg, WorldState}, Grid, UpdateResult};
+use crate::grid::{
+    Grid, UpdateResult,
+    msg::{BikeUpdate, GridUpdateMsg, WorldState},
+};
 
 pub mod connection;
 
@@ -14,9 +17,7 @@ pub struct WorldServer {
     score_win: u8,
 
     pub world_state: WorldState,
-    // pos: (f32, f32),
-    // last_edit_id: usize,
-    players: u8, // doubles as player count I guess...
+    players: u8,
     last_update_time: Instant,
     next_update: GridUpdateMsg,
     last_update: GridUpdateMsg,
@@ -30,8 +31,6 @@ impl WorldServer {
             ready: [false; PLAYER_MAX],
             score_win: SCORE_WIN,
             world_state: WorldState::Waiting,
-            // pos: (0.0, 0.0),
-            // last_edit_id: 0,
             players: 0,
             last_update_time: Instant::now(),
             next_update: GridUpdateMsg::default(),
@@ -75,6 +74,12 @@ impl WorldServer {
                 }
                 self.world_state = WorldState::Playing;
                 self.grid = Grid::new();
+                self.grid.rng.srand(
+                    SystemTime::now()
+                        .duration_since(SystemTime::UNIX_EPOCH)
+                        .unwrap()
+                        .as_millis() as u64,
+                );
                 self.last_update_time = Instant::now();
                 self.next_update = GridUpdateMsg::default();
                 self.last_update = GridUpdateMsg::default();
@@ -85,6 +90,14 @@ impl WorldServer {
                     self.last_update = self.next_update.clone();
                     self.next_update.updates.clear();
                     self.next_update.tick += 1;
+
+                    for i in self.players as usize..self.grid.bikes.len() {
+                        if let Some(update) =
+                            self.grid.bikes[i].ai_update(&self.grid.occupied, &self.grid.rng)
+                        {
+                            self.last_update.updates.push(update);
+                        }
+                    }
 
                     match self.grid.apply_updates(&self.last_update) {
                         UpdateResult::GameOver(winner) => {

@@ -10,6 +10,7 @@ use macroquad::{
 
 pub mod bike;
 pub mod msg;
+pub mod ai;
 
 pub const SQUARES: i16 = 80;
 
@@ -63,6 +64,13 @@ impl Occupied {
         Self {
             occupied: vec![vec![Cell::new(); SQUARES as usize]; SQUARES as usize],
         }
+    }
+
+    pub fn is_occupied(&self, pos: Point) -> bool {
+        if pos.0 < 0 || pos.1 < 0 || pos.0 >= SQUARES || pos.1 >= SQUARES {
+            return true;
+        }
+        self.occupied[pos.1 as usize][pos.0 as usize].is_occupied()
     }
 
     pub fn occupy(&mut self, pos: Point, id: u8) -> bool {
@@ -162,7 +170,7 @@ impl Grid {
         let mut alive_players = 0;
         let mut hasher = DefaultHasher::new();
         for (i, bike) in self.bikes.iter_mut().enumerate() {
-            if bike.update(&mut self.occupied, i != 0, &self.rng) {
+            if bike.update(&mut self.occupied) {
                 // player died
                 // return UpdateResult::GameOver;
             } else {

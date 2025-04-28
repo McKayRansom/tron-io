@@ -12,6 +12,7 @@ mod text;
 mod input;
 mod audio;
 mod assets_path;
+mod ui;
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 pub const PKG_NAME: &str = env!("CARGO_PKG_NAME");
