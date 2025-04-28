@@ -1,14 +1,20 @@
 use context::Context;
-use game::Game;
-use macroquad::window::{next_frame, Conf};
-use quad_net::quad_socket::client::QuadSocket;
-
+use gameplay::Gameplay;
+use macroquad::window::{Conf, next_frame};
+use scene::{main_menu::MainMenu, EScene};
 
 // mod bike;
-mod game;
+mod gameplay;
 // mod grid;
 mod context;
+mod scene;
+mod text;
+mod input;
+mod audio;
+mod assets_path;
 
+pub const VERSION: &str = env!("CARGO_PKG_VERSION");
+pub const PKG_NAME: &str = env!("CARGO_PKG_NAME");
 
 fn window_conf() -> Conf {
     Conf {
@@ -34,35 +40,29 @@ fn window_conf() -> Conf {
 
 #[macroquad::main(window_conf)]
 async fn main() {
+    let mut ctx = Context::default().await;
 
-    let context = Context::default().await;
-
-    #[cfg(not(target_arch = "wasm32"))]
-    let socket = QuadSocket::connect("localhost:8090").expect("Failed to connect to server");
-    #[cfg(target_arch = "wasm32")]
-    let socket = QuadSocket::connect("ws://localhost:8091").expect("Failed to connect to server");
-
-    #[cfg(target_arch = "wasm32")]
-    {
-        while socket.is_wasm_websocket_connected() == false {
-            next_frame().await;
-        }
-    }
-
-    let mut game = Game::new(Some(socket));
-
-    let mut won = 0;
-    let mut lost = 0;
+    let mut current_scene: Box<dyn scene::Scene> =
+        Box::new(scene::main_menu::MainMenu::new(&mut ctx).await);
 
     loop {
-        if game.update(won, lost, &context) {
-            if game.game_won {
-                won += 1;
-            } else {
-                lost += 1;
-            }
-            game = Game::new(game.socket.take());
+        ctx.update();
+
+        current_scene.update(&mut ctx);
+
+        current_scene.draw(&mut ctx);
+
+        if ctx.request_quit {
+            break;
         }
+
+        if let Some(escene) = ctx.switch_scene_to.take() {
+            current_scene = match escene {
+                EScene::MainMenu => Box::new(MainMenu::new(&mut ctx).await),
+                EScene::Gameplay(game_options) => Box::new(Gameplay::new(&mut ctx, game_options)),
+            };
+        }
+
         next_frame().await;
     }
 }

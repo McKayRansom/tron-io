@@ -1,0 +1,24 @@
+
+pub struct GameOptions {
+    pub socket: Option<QuadSocket>,
+}
+
+pub enum EScene {
+    Gameplay(GameOptions),
+    MainMenu,
+}
+
+use quad_net::quad_socket::client::QuadSocket;
+
+use crate::context::Context;
+
+// pub mod credits;
+// pub mod gameplay;
+pub mod main_menu;
+// pub mod pause;
+// pub mod settings;
+
+pub trait Scene {
+    fn update(&mut self, ctx: &mut Context);
+    fn draw(&mut self, ctx: &mut Context);
+}

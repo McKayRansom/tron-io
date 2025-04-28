@@ -22,29 +22,32 @@ pub struct GridUpdateMsg {
     pub updates: Vec<BikeUpdate>,
 }
 
+#[derive(Default, DeBin, SerBin, Debug, Copy, Clone)]
+pub enum WorldState {
+    #[default]
+    Waiting,
+    Playing,
+    RoundOver,
+    GameOver,
+}
+
 #[derive(DeBin, SerBin, Debug, Clone)]
-pub struct JoinResponse {
+pub struct ServerMsg {
     pub id: u8,
-    pub seed: u32,
-}
-
-
-#[derive(DeBin, SerBin, Debug, Clone)]
-pub enum ServerMsg {
-    Update(GridUpdateMsg),
-    JoinResponse(JoinResponse),
+    pub state: WorldState,
+    pub grid_update: Option<GridUpdateMsg>,
 }
 
 #[derive(DeBin, SerBin, Debug, Clone)]
-pub enum ClientMsg {
-    Update(GridUpdateMsg),
-    Join,
+pub struct ClientMsg {
+    pub state: WorldState,
+    pub update: Option<GridUpdateMsg>,
 }
 
 impl Grid {
     pub fn apply_update(&mut self, update: &BikeUpdate) {
         // Apply the update to the grid
-        let bike = self.bikes.get_mut(update.id as usize - 1).unwrap();
+        let bike = self.bikes.get_mut(update.id as usize).unwrap();
         bike.dir = update.dir;
         // bike.update(&mut self.occupied, false);
     }

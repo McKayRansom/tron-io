@@ -133,8 +133,7 @@ const PLAYER_COLOR_LOOKUP: &[Color] = &[
 ];
 
 pub enum UpdateResult {
-    GameOver,
-    GameWon,
+    GameOver(u8),
     InProgress,
 }
 
@@ -144,34 +143,36 @@ impl Grid {
         let bikes = vec![
             Bike::new(&mut occupied, 1, (8, SQUARES / 2), bike::RIGHT),
             Bike::new(&mut occupied, 2, (SQUARES - 9, SQUARES / 2), bike::LEFT),
-            Bike::new(&mut occupied, 3, (SQUARES / 2, 11), bike::DOWN),
-            Bike::new(&mut occupied, 4, (SQUARES / 2, SQUARES - 11), bike::UP),
+            // Bike::new(&mut occupied, 3, (SQUARES / 2, 11), bike::DOWN),
+            // Bike::new(&mut occupied, 4, (SQUARES / 2, SQUARES - 11), bike::UP),
         ];
-        Self { bikes, occupied, tick: 0 }
+        Self {
+            bikes,
+            occupied,
+            tick: 0,
+        }
     }
 
     pub fn update(&mut self) -> UpdateResult {
-        let mut all_snakes_dead = true;
+        let mut winning_player: Option<u8> = None;
+        let mut alive_players = 0;
         let mut hasher = DefaultHasher::new();
         for (i, bike) in self.bikes.iter_mut().enumerate() {
-            
             if bike.update(&mut self.occupied, i != 0) {
-                if i == 0 {
-                    // player died
-                    return UpdateResult::GameOver;
-                }
-            } else if i != 0 {
-                all_snakes_dead = false;
+                // player died
+                // return UpdateResult::GameOver;
+            } else {
+                winning_player = Some(i as u8);
+                alive_players += 1;
             }
 
             // Compute hash for the bike
             bike.hash(&mut hasher);
             // println!("Bike {} hash: {}", i, bike_hash); // Replace with appropriate logging if needed
-
         }
         let _bike_hash = hasher.finish();
-        if all_snakes_dead {
-            UpdateResult::GameWon
+        if alive_players == 1 {
+            UpdateResult::GameOver(winning_player.unwrap())
         } else {
             UpdateResult::InProgress
         }
