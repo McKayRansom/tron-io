@@ -1,4 +1,3 @@
-use macroquad::rand;
 use crate::grid::Point;
 
 use super::Occupied;
@@ -25,7 +24,7 @@ impl Bike {
         Self { id, head, dir }
     }
 
-    pub fn update(&mut self, grid: &mut Occupied, is_ai: bool) -> bool {
+    pub fn update(&mut self, grid: &mut Occupied, is_ai: bool, rng: &macroquad::rand::RandGenerator) -> bool {
         
         grid.free(self.head, self.id);
 
@@ -33,7 +32,7 @@ impl Bike {
 
         if grid.occupy(new_head, self.id) {
             if is_ai {
-                let dirs = if rand::RandomRange::gen_range(0, 2) == 0 {
+                let dirs = if rng.gen_range(0, 2) == 0 {
                     DIRS
                 } else {
                     DIRS_REV

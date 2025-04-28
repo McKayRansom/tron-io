@@ -33,7 +33,7 @@ pub fn draw_text_centered(ctx: &Context, text: &str, y: f32, size: Size, color: 
     );
 }
 
-fn text_size(size: Size) -> u16 {
+pub const fn text_size(size: Size) -> u16 {
     match size {
         Size::Small => 20u16,
         Size::Medium => 32u16,

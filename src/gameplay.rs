@@ -8,7 +8,7 @@ use crate::scene::{GameOptions, Scene};
 use crate::text::draw_text_centered;
 use crate::{input, text};
 use tron_io::grid::bike::{DOWN, LEFT, RIGHT, UP};
-use tron_io::grid::{Grid, Point};
+use tron_io::grid::{Grid, PLAYER_COLOR_LOOKUP, Point};
 
 const PLAYER_MAX: usize = 4;
 
@@ -32,7 +32,7 @@ impl Gameplay {
         Self {
             grid: Grid::new(),
             scores: [0; PLAYER_MAX],
-            score_win: 2,
+            score_win: 3,
             speed: 0.05,
             player_id: None,
             ready: false,
@@ -71,31 +71,62 @@ impl Gameplay {
 impl Scene for Gameplay {
     fn update(&mut self, context: &mut Context) {
         if let Some(socket) = &mut self.socket {
+            // wait for players
+            if input::action_pressed(input::Action::Confirm, &context.gamepads) {
+                if !self.ready {
+                    self.ready = true;
+                    println!("Ready!");
+                    socket.send_bin(&ClientMsg {
+                        ready: true,
+                        state: self.game_state,
+                        update: None,
+                    });
+                }
+            }
             // MULTILAYER
             while let Some(server_msg) = socket.try_recv_bin::<ServerMsg>() {
                 // self.grid.apply_updates(&grid_update);
-                dbg!(&server_msg);
+                // dbg!(&server_msg);
                 self.player_id = Some(server_msg.id);
                 if self.game_state != server_msg.state {
                     self.game_state = server_msg.state;
-                    if !matches!(self.game_state, WorldState::Playing) {
-                        self.grid = Grid::new();
-                        // self.scores = [0; PLAYER_MAX];
+                    self.ready = false;
+                    match self.game_state {
+                        WorldState::Waiting => {
+                            // New game
+                            self.grid = Grid::new();
+                            self.scores = [0; PLAYER_MAX];
+                        }
+                        WorldState::Playing => {
+                            // New round (potentially)
+                            self.grid = Grid::new();
+                        }
+                        WorldState::RoundOver(winner) => self.scores[winner as usize] += 1,
+                        WorldState::GameOver(winner) => self.scores[winner as usize] += 1,
                     }
+                    println!("Game state changed to {:?}", self.game_state);
                 }
-                if let Some(grid_update) = server_msg.grid_update {
-                    self.player_update = None;
-                    let _ = self.grid.apply_updates(&grid_update);
+                if self.game_state == WorldState::Playing {
+                    if let Some(grid_update) = server_msg.grid_update {
+                        self.player_update = None;
+                        let _ = self.grid.apply_updates(&grid_update);
 
-                    socket.send_bin(&ClientMsg {
-                        ready: false,
-                        state: tron_io::grid::msg::WorldState::Playing,
-                        update: Some(GridUpdateMsg {
-                            tick: self.grid.tick,
-                            seed: 0,
-                            updates: vec![],
-                        }),
-                    });
+                        if self.grid.hash != grid_update.hash {
+                            println!("Hash mismatch! {} != {}", self.grid.hash, grid_update.hash);
+                            println!("Tick mismatch! {} != {}", self.grid.tick, grid_update.tick);
+                            // context.switch_scene_to = Some(crate::scene::EScene::MainMenu);
+                        }
+
+                        socket.send_bin(&ClientMsg {
+                            ready: false,
+                            state: tron_io::grid::msg::WorldState::Playing,
+                            update: Some(GridUpdateMsg {
+                                tick: self.grid.tick,
+                                hash: self.grid.hash,
+                                updates: vec![],
+                            }),
+                        });
+                    }
                 }
             }
         } else {
@@ -118,7 +149,7 @@ impl Scene for Gameplay {
                         self.last_update = get_time();
                         match self.grid.apply_updates(&GridUpdateMsg {
                             tick: self.grid.tick + 1,
-                            seed: 0,
+                            hash: 0,
                             updates: if let Some(player_update) = self.player_update.take() {
                                 vec![player_update]
                             } else {
@@ -160,7 +191,7 @@ impl Scene for Gameplay {
                                     ready: self.ready,
                                     update: Some(GridUpdateMsg {
                                         tick: self.grid.tick,
-                                        seed: 0,
+                                        hash: self.grid.hash,
                                         updates: vec![update],
                                     }),
                                     state: tron_io::grid::msg::WorldState::Playing,
@@ -179,15 +210,48 @@ impl Scene for Gameplay {
         clear_background(BLACK);
 
         self.grid.draw();
+        text::draw_text(context, "WN:", 10., 30., text::Size::Medium, colors::WHITE);
 
-        text::draw_text(
-            context,
-            format!("Score: Won: {} Lost: {}", self.scores[0], self.scores[1]).as_str(),
-            10.,
-            20.,
-            text::Size::Medium,
-            colors::WHITE,
-        );
+        const BOX_POS_ADJUSTMENT: f32 = text::text_size(text::Size::Medium) as f32 / 2.;
+
+        for j in 0..self.score_win {
+            draw_rectangle(
+                60. + j as f32 * 20.,
+                30. - BOX_POS_ADJUSTMENT,
+                15.,
+                15.,
+                colors::WHITE,
+            );
+        }
+
+        for i in 0..2 {
+            let pos = vec2(10., 60. + 30. * i as f32);
+            text::draw_text(
+                context,
+                format!("P{}:", i + 1).as_str(),
+                pos.x,
+                pos.y,
+                text::Size::Medium,
+                PLAYER_COLOR_LOOKUP[i],
+            );
+            for j in 0..self.scores[i] {
+                draw_rectangle(
+                    pos.x + 50. + j as f32 * 20.,
+                    pos.y - BOX_POS_ADJUSTMENT,
+                    15.,
+                    15.,
+                    PLAYER_COLOR_LOOKUP[i],
+                );
+            }
+            // text::draw_text(
+            //     context,
+            //     format!("{}", self.scores[i]).as_str(),
+            //     pos.x + 50.,
+            //     pos.y,
+            //     text::Size::Medium,
+            //     colors::WHITE,
+            // );
+        }
 
         if matches!(
             self.game_state,

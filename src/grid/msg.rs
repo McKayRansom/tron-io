@@ -15,10 +15,10 @@ impl BikeUpdate {
     }
 }
 
-#[derive(DeBin, SerBin, Debug, Clone)]
+#[derive(DeBin, SerBin, Debug, Clone, Default)]
 pub struct GridUpdateMsg {
     pub tick: u32,
-    pub seed: u32,
+    pub hash: u64,
     pub updates: Vec<BikeUpdate>,
 }
 
@@ -86,7 +86,7 @@ mod tests {
         };
         let msg = GridUpdateMsg {
             tick: 1,
-            seed: 1234,
+            hash: 1234,
             updates: vec![update],
         };
         grid.apply_updates(&msg);

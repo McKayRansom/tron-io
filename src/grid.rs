@@ -35,7 +35,7 @@ impl Cell {
 
     pub fn color(&self) -> Color {
         if self.val != 0 {
-            let mut color = PLAYER_COLOR_LOOKUP[(self.val & 0b01111111) as usize];
+            let mut color = PLAYER_COLOR_LOOKUP[((self.val & 0b01111111) - 1) as usize];
             if self.val & 0b10000000 != 0 {
                 color.r += 0.2;
                 color.g += 0.2;
@@ -83,8 +83,10 @@ impl Occupied {
 
 pub struct Grid {
     pub tick: u32,
+    pub hash: u64,
     pub bikes: Vec<Bike>,
     pub occupied: Occupied,
+    pub rng: macroquad::rand::RandGenerator,
 }
 
 pub struct GridDrawInfo {
@@ -124,8 +126,7 @@ impl GridDrawInfo {
     // }
 }
 
-const PLAYER_COLOR_LOOKUP: &[Color] = &[
-    colors::WHITE,
+pub const PLAYER_COLOR_LOOKUP: &[Color] = &[
     colors::GREEN,
     colors::BLUE,
     colors::RED,
@@ -147,9 +148,11 @@ impl Grid {
             // Bike::new(&mut occupied, 4, (SQUARES / 2, SQUARES - 11), bike::UP),
         ];
         Self {
+            hash: 0,
             bikes,
             occupied,
             tick: 0,
+            rng: macroquad::rand::RandGenerator::new(),
         }
     }
 
@@ -158,7 +161,7 @@ impl Grid {
         let mut alive_players = 0;
         let mut hasher = DefaultHasher::new();
         for (i, bike) in self.bikes.iter_mut().enumerate() {
-            if bike.update(&mut self.occupied, i != 0) {
+            if bike.update(&mut self.occupied, i != 0, &self.rng) {
                 // player died
                 // return UpdateResult::GameOver;
             } else {
@@ -170,7 +173,7 @@ impl Grid {
             bike.hash(&mut hasher);
             // println!("Bike {} hash: {}", i, bike_hash); // Replace with appropriate logging if needed
         }
-        let _bike_hash = hasher.finish();
+        self.hash = hasher.finish();
         if alive_players == 1 {
             UpdateResult::GameOver(winning_player.unwrap())
         } else {
@@ -188,9 +191,12 @@ impl Grid {
             colors::BLACK,
         );
 
+        const GRID_LINE_COLOR: Color = colors::DARKGRAY;
+        const GRID_LINE_INTERVAL: i16 = 4;
+
         // draw lines every 4 squares
         for i in 0..SQUARES + 1 {
-            if i % 4 != 0 {
+            if i % GRID_LINE_INTERVAL != 0 {
                 continue;
             }
             let point_horix = draw_info.grid_to_screen((0, i));
@@ -200,7 +206,7 @@ impl Grid {
                 point_horix.x + draw_info.game_size,
                 point_horix.y,
                 2.,
-                colors::GRAY,
+                GRID_LINE_COLOR,
             );
             let point_vert = draw_info.grid_to_screen((i, 0));
             draw_line(
@@ -209,7 +215,7 @@ impl Grid {
                 point_vert.x,
                 point_vert.y + draw_info.game_size,
                 2.,
-                colors::GRAY,
+                GRID_LINE_COLOR,
             );
         }
         for y in 0..SQUARES {
