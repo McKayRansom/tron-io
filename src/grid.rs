@@ -126,9 +126,9 @@ impl GridDrawInfo {
 
 const PLAYER_COLOR_LOOKUP: &[Color] = &[
     colors::WHITE,
+    colors::GREEN,
     colors::BLUE,
     colors::RED,
-    colors::DARKGREEN,
     colors::GOLD,
 ];
 

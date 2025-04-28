@@ -44,7 +44,7 @@ impl ClientState {
                 }
             }
             None => {
-                let mut waiting_queue = waiting_queue.lock().unwrap();
+                let waiting_queue = waiting_queue.lock().unwrap();
 
                 if let Some(world_arc) = &waiting_queue.other_waiting {
                     // if there is another waiting player, send them both into the same world
@@ -62,7 +62,7 @@ impl ClientState {
                     world.as_mut().unwrap().lock().unwrap().world_state = WorldState::Playing;
 
                     self.world = world.clone();
-                    waiting_queue.other_waiting = world;
+                    // waiting_queue.other_waiting = world;
                 }
             }
         }

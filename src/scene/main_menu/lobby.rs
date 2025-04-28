@@ -33,6 +33,7 @@ impl Lobby {
                     socket.send_bin(&ClientMsg {
                         state: tron_io::grid::msg::WorldState::Waiting,
                         update: None,
+                        ready: false,
                     });
                     self.socket = Some(socket);
                     self.draw_finished = false;

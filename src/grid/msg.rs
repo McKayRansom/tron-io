@@ -22,13 +22,13 @@ pub struct GridUpdateMsg {
     pub updates: Vec<BikeUpdate>,
 }
 
-#[derive(Default, DeBin, SerBin, Debug, Copy, Clone)]
+#[derive(Default, DeBin, SerBin, Debug, Copy, Clone, PartialEq, Eq)]
 pub enum WorldState {
     #[default]
     Waiting,
     Playing,
-    RoundOver,
-    GameOver,
+    RoundOver(u8),
+    GameOver(u8),
 }
 
 #[derive(DeBin, SerBin, Debug, Clone)]
@@ -40,6 +40,7 @@ pub struct ServerMsg {
 
 #[derive(DeBin, SerBin, Debug, Clone)]
 pub struct ClientMsg {
+    pub ready: bool,
     pub state: WorldState,
     pub update: Option<GridUpdateMsg>,
 }

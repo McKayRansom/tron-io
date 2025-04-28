@@ -5,16 +5,22 @@ use tron_io::grid::msg::{BikeUpdate, ClientMsg, GridUpdateMsg, ServerMsg, WorldS
 
 use crate::context::Context;
 use crate::scene::{GameOptions, Scene};
+use crate::text::draw_text_centered;
 use crate::{input, text};
 use tron_io::grid::bike::{DOWN, LEFT, RIGHT, UP};
 use tron_io::grid::{Grid, Point};
 
+const PLAYER_MAX: usize = 4;
+
 pub struct Gameplay {
     grid: Grid,
+    scores: [u8; PLAYER_MAX],
+    score_win: u8,
 
     speed: f64,
     last_update: f64,
     player_id: Option<u8>,
+    ready: bool,
     player_update: Option<BikeUpdate>,
     game_state: WorldState,
     pub game_won: bool,
@@ -25,8 +31,11 @@ impl Gameplay {
     pub fn new(_context: &Context, gameoptions: GameOptions) -> Self {
         Self {
             grid: Grid::new(),
+            scores: [0; PLAYER_MAX],
+            score_win: 2,
             speed: 0.05,
             player_id: None,
+            ready: false,
             last_update: get_time(),
             player_update: None,
             game_state: WorldState::Waiting,
@@ -67,12 +76,19 @@ impl Scene for Gameplay {
                 // self.grid.apply_updates(&grid_update);
                 dbg!(&server_msg);
                 self.player_id = Some(server_msg.id);
-                self.game_state = server_msg.state;
+                if self.game_state != server_msg.state {
+                    self.game_state = server_msg.state;
+                    if !matches!(self.game_state, WorldState::Playing) {
+                        self.grid = Grid::new();
+                        // self.scores = [0; PLAYER_MAX];
+                    }
+                }
                 if let Some(grid_update) = server_msg.grid_update {
                     self.player_update = None;
                     let _ = self.grid.apply_updates(&grid_update);
 
                     socket.send_bin(&ClientMsg {
+                        ready: false,
                         state: tron_io::grid::msg::WorldState::Playing,
                         update: Some(GridUpdateMsg {
                             tick: self.grid.tick,
@@ -85,9 +101,12 @@ impl Scene for Gameplay {
         } else {
             // SINGLEPLAYER
             match self.game_state {
-                WorldState::Waiting | WorldState::RoundOver | WorldState::GameOver => {
+                WorldState::Waiting | WorldState::RoundOver(_) | WorldState::GameOver(_) => {
                     // wait for players
                     if input::action_pressed(input::Action::Confirm, &context.gamepads) {
+                        if matches!(self.game_state, WorldState::GameOver(_)) {
+                            self.scores = [0; PLAYER_MAX];
+                        }
                         self.game_state = WorldState::Playing;
                         self.player_id = Some(0);
                         self.grid = Grid::new();
@@ -107,13 +126,12 @@ impl Scene for Gameplay {
                             },
                         }) {
                             tron_io::grid::UpdateResult::GameOver(winner) => {
-                                dbg!(&winner);
-                                if winner == 0 {
-                                    self.game_state = WorldState::GameOver;
-                                    self.game_won = false;
+                                self.scores[winner as usize] += 1;
+                                if self.scores[winner as usize] == self.score_win {
+                                    self.game_state = WorldState::GameOver(winner);
+                                    self.game_won = winner == self.player_id.unwrap();
                                 } else {
-                                    self.game_state = WorldState::RoundOver;
-                                    self.game_won = true;
+                                    self.game_state = WorldState::RoundOver(winner);
                                 }
                             }
                             tron_io::grid::UpdateResult::InProgress => {}
@@ -121,7 +139,6 @@ impl Scene for Gameplay {
                         self.player_update = None;
                     }
                 }
-                _ => {}
             }
         }
 
@@ -140,6 +157,7 @@ impl Scene for Gameplay {
                             if let Some(socket) = &mut self.socket {
                                 // send update to server
                                 socket.send_bin(&ClientMsg {
+                                    ready: self.ready,
                                     update: Some(GridUpdateMsg {
                                         tick: self.grid.tick,
                                         seed: 0,
@@ -164,45 +182,56 @@ impl Scene for Gameplay {
 
         text::draw_text(
             context,
-            format!("Score: Won: X Lost: X").as_str(),
+            format!("Score: Won: {} Lost: {}", self.scores[0], self.scores[1]).as_str(),
             10.,
             20.,
             text::Size::Medium,
             colors::WHITE,
         );
 
-        if matches!(self.game_state, WorldState::GameOver | WorldState::Waiting | WorldState::RoundOver) {
+        if matches!(
+            self.game_state,
+            WorldState::GameOver(_) | WorldState::Waiting | WorldState::RoundOver(_)
+        ) {
             draw_rectangle(0., 0., screen_width(), screen_height(), Color {
                 r: 0.,
                 g: 0.,
                 b: 0.,
                 a: 0.5,
             });
-            let text = match self.game_state {
-                WorldState::GameOver => {
-                    if self.game_won {
-                        "Game Won! Press [enter] to play again."
+            let (text, subtext) = match self.game_state {
+                WorldState::GameOver(winner) => {
+                    if winner == self.player_id.unwrap() {
+                        ("Game Won!", "Press [enter] to play again.")
                     } else {
-                        "Game Over. Press [enter] to play again."
+                        ("Game Lost.", "Press [enter] to play again.")
                     }
                 }
-                WorldState::Waiting => "Waiting for players...",
-                WorldState::RoundOver => "Round Over, waiting for next round.",
-                _ => "Unknown state",
+                WorldState::Waiting => ("Waiting for players...", "Press [enter] to start."),
+                WorldState::RoundOver(winner) => (
+                    if winner == self.player_id.unwrap() {
+                        "Round Won!"
+                    } else {
+                        "Round Lost."
+                    },
+                    "Press [enter] when ready.",
+                ),
+                _ => unreachable!(),
             };
-            let font_size = 30.;
-            let text_size = measure_text(text, None, font_size as _, 1.0);
 
-            draw_text_ex(
+            draw_text_centered(
+                &context,
                 text,
-                screen_width() / 2. - text_size.width / 2.,
-                screen_height() / 2. + text_size.height / 2.,
-                TextParams {
-                    font: Some(&context.font),
-                    font_size: font_size as u16,
-                    color: colors::WHITE,
-                    ..Default::default()
-                },
+                context.screen_size.y / 2.,
+                text::Size::Medium,
+                colors::WHITE,
+            );
+            draw_text_centered(
+                &context,
+                subtext,
+                context.screen_size.y / 2. + 100.,
+                text::Size::Small,
+                colors::WHITE,
             );
         }
     }
