@@ -8,6 +8,16 @@ pub const DOWN: Point = (0, 1);
 pub const RIGHT: Point = (1, 0);
 pub const LEFT: Point = (-1, 0);
 
+pub fn invert_dir(dir: Point) -> Point {
+    match dir {
+        UP => DOWN,
+        DOWN => UP,
+        LEFT => RIGHT,
+        RIGHT => LEFT,
+        _ => panic!("Invalid direction"),
+    }
+}
+
 pub const DIRS: &[Point] = &[UP, DOWN, LEFT, RIGHT];
 pub const DIRS_REV: &[Point] = &[RIGHT, LEFT, DOWN, UP];
 

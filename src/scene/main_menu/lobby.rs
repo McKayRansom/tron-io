@@ -1,6 +1,6 @@
 use macroquad::color::colors;
 use quad_net::quad_socket::client::QuadSocket;
-use tron_io::grid::msg::ClientMsg;
+use tron_io::{grid::msg::ClientMsg, world::{client::WorldClient, online::WorldClientOnline}};
 
 use crate::{context::Context, text};
 
@@ -39,7 +39,7 @@ impl Lobby {
                     self.draw_finished = false;
                     context.switch_scene_to =
                     Some(crate::scene::EScene::Gameplay(crate::scene::GameOptions {
-                        socket: self.socket.take(),
+                        client: WorldClient::new(Box::new(WorldClientOnline::new(self.socket.take().unwrap())))
                     }));
                 }
                 Err(err) => {

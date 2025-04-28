@@ -7,6 +7,8 @@ use crate::context::Context;
 use crate::input::{Action, action_pressed};
 use crate::text::{self, draw_text};
 use macroquad::color::colors;
+use tron_io::world::client::WorldClient;
+use tron_io::world::local::WorldClientLocal;
 
 mod lobby;
 
@@ -32,7 +34,7 @@ const TITLE_Y_INSET: f32 = 100.;
 const MENU_CONTENT_Y: f32 = 400.;
 
 impl MainMenu {
-    pub async fn new(ctx: &mut Context) -> Self {
+    pub async fn new(_ctx: &mut Context) -> Self {
         let menu_options = vec![
             MenuOption::Local,
             MenuOption::Online,
@@ -89,7 +91,9 @@ impl Scene for MainMenu {
 
             match menu_option {
                 MenuOption::Local => {
-                    ctx.switch_scene_to = Some(EScene::Gameplay(super::GameOptions { socket: None }));
+                    ctx.switch_scene_to = Some(EScene::Gameplay(super::GameOptions {
+                        client: WorldClient::new(Box::new(WorldClientLocal::new())),
+                    }));
                 }
                 MenuOption::Online => {
                     // ctx.switch_scene_to = Some(EScene::Gameplay);

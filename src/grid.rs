@@ -15,6 +15,7 @@ pub const SQUARES: i16 = 80;
 
 pub type Point = (i16, i16);
 
+
 #[derive(Clone)]
 pub struct Cell {
     val: u8,

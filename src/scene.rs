@@ -1,6 +1,6 @@
 
 pub struct GameOptions {
-    pub socket: Option<QuadSocket>,
+    pub client: WorldClient,
 }
 
 pub enum EScene {
@@ -8,7 +8,7 @@ pub enum EScene {
     MainMenu,
 }
 
-use quad_net::quad_socket::client::QuadSocket;
+use tron_io::world::client::WorldClient;
 
 use crate::context::Context;
 

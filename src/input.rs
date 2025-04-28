@@ -2,26 +2,7 @@ use gamepads::Gamepads;
 use macroquad::input::KeyCode;
 use macroquad::input::{is_key_down, is_key_pressed};
 
-pub enum Action {
-    /// move up (player, menu, etc.)
-    Up,
-    /// move down (player, menu, etc.)
-    Down,
-    /// move left (player, menu, etc.)
-    Left,
-    /// move  right (player, menu, etc.)
-    Right,
-    /// select the menu option or prompt to continue
-    Confirm,
-    /// go back in the menu
-    Cancel,
-    /// reset the level to the starting positions
-    Reset,
-    /// go back a move
-    Rewind,
-    /// the gameplay and bring up a menu
-    Pause,
-}
+pub use tron_io::world::Action;
 
 /// just pressed, not held down
 pub fn action_pressed(action: Action, gamepads: &Gamepads) -> bool {
