@@ -1,6 +1,9 @@
 use macroquad::color::colors;
 use quad_net::quad_socket::client::QuadSocket;
-use tron_io::{grid::msg::ClientMsg, world::{client::WorldClient, online::WorldClientOnline}};
+use tron_io::{
+    grid::msg::ClientMsg,
+    world::{client::WorldClient, online::WorldClientOnline},
+};
 
 use crate::{context::Context, text};
 
@@ -29,30 +32,37 @@ impl Lobby {
     pub fn update(&mut self, context: &mut Context) {
         if self.socket.is_none() && self.draw_finished && self.error == false {
             match QuadSocket::connect(self.socket_addr()) {
-                Ok(mut socket) => {
-                    socket.send_bin(&ClientMsg {
-                        state: tron_io::grid::msg::WorldState::Waiting,
-                        update: None,
-                        ready: false,
-                    });
+                Ok(socket) => {
                     self.socket = Some(socket);
                     self.draw_finished = false;
-                    context.switch_scene_to =
-                    Some(crate::scene::EScene::Gameplay(crate::scene::GameOptions {
-                        client: WorldClient::new(Box::new(WorldClientOnline::new(self.socket.take().unwrap())))
-                    }));
+
                 }
                 Err(err) => {
                     dbg!(err);
                     self.error = true
                 }
             }
+        }
 
-            #[cfg(target_arch = "wasm32")]
-            {
-                while self.socket.is_wasm_websocket_connected() == false {
-                    next_frame().await;
+        if self.socket.is_some() && self.draw_finished {
+            if let Some(socket) = &mut self.socket {
+                #[cfg(target_arch = "wasm32")]
+                {
+                    if socket.is_wasm_websocket_connected() == false {
+                        return;
+                    }
                 }
+                socket.send_bin(&ClientMsg {
+                    state: tron_io::grid::msg::WorldState::Waiting,
+                    update: None,
+                    ready: false,
+                });
+                context.switch_scene_to =
+                Some(crate::scene::EScene::Gameplay(crate::scene::GameOptions {
+                    client: WorldClient::new(Box::new(WorldClientOnline::new(
+                        self.socket.take().unwrap(),
+                    ))),
+                }));
             }
         }
     }

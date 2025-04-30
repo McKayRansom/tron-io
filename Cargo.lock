@@ -284,10 +284,7 @@ checksum = "c8c912fc0a5052c6e8fefe36bd3965be5aec4edcedff198461c697c916f50556"
 dependencies = [
  "android_logger",
  "gilrs",
- "js-sys",
  "log",
- "wasm-bindgen",
- "web-sys",
 ]
 
 [[package]]
