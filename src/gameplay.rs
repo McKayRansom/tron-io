@@ -6,7 +6,7 @@ use tron_io::world::{self, Action};
 
 use crate::context::Context;
 use crate::scene::{GameOptions, Scene};
-use crate::text::draw_text_centered;
+use crate::text::draw_text_screen_centered;
 use crate::{input, text};
 use tron_io::grid::PLAYER_COLOR_LOOKUP;
 
@@ -17,7 +17,7 @@ pub struct Gameplay {
 }
 
 impl Gameplay {
-    pub fn new(context: &Context, gameoptions: GameOptions) -> Self {
+    pub fn new(_context: &Context, gameoptions: GameOptions) -> Self {
         Self {
             // speed: 0.05,
             // last_update: get_time(),
@@ -43,12 +43,12 @@ impl Gameplay {
 
 impl Scene for Gameplay {
     fn update(&mut self, context: &mut Context) {
-        if input::action_pressed(input::Action::Confirm, &context.gamepads) {
+        if input::action_pressed(input::Action::Confirm, context) {
             self.client.handle_input(&input::Action::Confirm);
         }
 
         if matches!(self.client.game_state, WorldState::GameOver(_))
-            && input::action_pressed(input::Action::Cancel, &context.gamepads)
+            && input::action_pressed(input::Action::Cancel, context)
         {
             context.switch_scene_to = Some(crate::scene::EScene::MainMenu);
         }
@@ -61,7 +61,6 @@ impl Scene for Gameplay {
     }
 
     fn draw(&mut self, context: &mut Context) {
-        clear_background(BLACK);
 
         self.client.grid.draw();
         text::draw_text(context, "WN:", 10., 30., text::Size::Medium, colors::WHITE);
@@ -138,14 +137,14 @@ impl Scene for Gameplay {
                 _ => unreachable!(),
             };
 
-            draw_text_centered(
+            draw_text_screen_centered(
                 &context,
                 text,
                 context.screen_size.y / 2.,
                 text::Size::Medium,
                 colors::WHITE,
             );
-            draw_text_centered(
+            draw_text_screen_centered(
                 &context,
                 subtext,
                 context.screen_size.y / 2. + 100.,

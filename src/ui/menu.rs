@@ -59,16 +59,16 @@ impl<V> Menu<V> {
             pos.y += MENU_SPACING;
         }
 
-        if action_pressed(Action::Up, &ctx.gamepads) {
+        if action_pressed(Action::Up, ctx) {
             play_sfx(ctx, &ctx.audio.sfx.menu_move);
             self.select_previous();
         }
-        if action_pressed(Action::Down, &ctx.gamepads) {
+        if action_pressed(Action::Down, ctx) {
             play_sfx(ctx, &ctx.audio.sfx.menu_move);
             self.select_next();
         }
 
-        if action_pressed(Action::Confirm, &ctx.gamepads) {
+        if action_pressed(Action::Confirm, ctx) {
             play_sfx(ctx, &ctx.audio.sfx.menu_select);
             Some(&self.items[self.selected].value)
         } else {

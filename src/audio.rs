@@ -5,6 +5,7 @@ use macroquad::audio::Sound;
 use crate::context::Context;
 
 pub struct SfxAtlas {
+    #[allow(unused)]
     pub menu_cancel: Sound,
     pub menu_select: Sound,
     pub menu_move: Sound,

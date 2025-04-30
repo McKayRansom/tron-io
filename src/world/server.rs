@@ -1,5 +1,3 @@
-use std::time::{Duration, Instant, SystemTime};
-
 use crate::grid::{
     Grid, UpdateResult,
     msg::{BikeUpdate, GridUpdateMsg, WorldState},
@@ -18,7 +16,7 @@ pub struct WorldServer {
 
     pub world_state: WorldState,
     players: u8,
-    last_update_time: Instant,
+    last_update_time: f64,
     next_update: GridUpdateMsg,
     last_update: GridUpdateMsg,
 }
@@ -32,7 +30,7 @@ impl WorldServer {
             score_win: SCORE_WIN,
             world_state: WorldState::Waiting,
             players: 0,
-            last_update_time: Instant::now(),
+            last_update_time: Self::get_time(),
             next_update: GridUpdateMsg::default(),
             last_update: GridUpdateMsg::default(),
         }
@@ -60,6 +58,21 @@ impl WorldServer {
         &self.last_update
     }
 
+    #[cfg(not(target_arch = "wasm32"))]
+    fn get_time() -> f64 {
+        use std::time::SystemTime;
+
+        let time = SystemTime::now()
+            .duration_since(SystemTime::UNIX_EPOCH)
+            .unwrap_or_else(|e| panic!("{}", e));
+        time.as_secs_f64()
+    }
+
+    #[cfg(target_arch = "wasm32")]
+    fn get_time() -> f64 {
+        macroquad::time::get_time()
+    }
+
     pub fn update(&mut self) {
         match self.world_state {
             WorldState::Waiting | WorldState::RoundOver(_) | WorldState::GameOver(_) => {
@@ -79,19 +92,14 @@ impl WorldServer {
                     self.world_state = WorldState::Playing;
                 }
                 self.grid = Grid::new();
-                self.grid.rng.srand(
-                    SystemTime::now()
-                        .duration_since(SystemTime::UNIX_EPOCH)
-                        .unwrap()
-                        .as_millis() as u64,
-                );
-                self.last_update_time = Instant::now();
+                self.grid.rng.srand(Self::get_time() as u64);
+                self.last_update_time = Self::get_time();
                 self.next_update = GridUpdateMsg::default();
                 self.last_update = GridUpdateMsg::default();
             }
             WorldState::Playing => {
-                if self.last_update_time.elapsed() > Duration::from_millis(50) {
-                    self.last_update_time = Instant::now();
+                if Self::get_time() - self.last_update_time > 0.05 {
+                    self.last_update_time = Self::get_time();
                     self.last_update = self.next_update.clone();
                     self.next_update.updates.clear();
                     self.next_update.tick += 1;

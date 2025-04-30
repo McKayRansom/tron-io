@@ -21,13 +21,25 @@ pub fn draw_text(ctx: &Context, text: &str, x: f32, y: f32, size: Size, color: C
     });
 }
 
-pub fn draw_text_centered(ctx: &Context, text: &str, y: f32, size: Size, color: Color) {
+pub fn draw_text_screen_centered(ctx: &Context, text: &str, y: f32, size: Size, color: Color) {
     let text_size = measure_text(text, Some(&ctx.font), text_size(size), 1.0);
     draw_text(
         ctx,
         text,
         (ctx.screen_size.x - text_size.width) / 2.,
         y,
+        size,
+        color,
+    );
+}
+
+pub fn draw_text_centered_pos(ctx: &Context, text: &str, x: f32, y: f32, size: Size, color: Color) {
+    let text_size = measure_text(text, Some(&ctx.font), text_size(size), 1.0);
+    draw_text(
+        ctx,
+        text,
+        x - text_size.width / 2.,
+        y - text_size.height / 2.,
         size,
         color,
     );

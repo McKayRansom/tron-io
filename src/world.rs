@@ -10,7 +10,7 @@ const PLAYER_MAX: usize = 4;
 const SCORE_WIN: u8 = 3;
 
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Action {
     /// move up (player, menu, etc.)
     Up,

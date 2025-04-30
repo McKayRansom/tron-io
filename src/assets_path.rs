@@ -2,6 +2,7 @@
 use std::env::current_exe;
 use std::path::PathBuf;
 
+#[cfg(not(target_family = "wasm"))]
 pub const ASSETS_DIR: &str = "assets";
 
 /// Returns the PathBuf to the assets folder root

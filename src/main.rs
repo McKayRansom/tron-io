@@ -1,6 +1,6 @@
 use context::Context;
 use gameplay::Gameplay;
-use macroquad::window::{Conf, next_frame};
+use macroquad::window::{next_frame, Conf};
 use scene::{main_menu::MainMenu, EScene};
 
 // mod bike;
@@ -47,11 +47,14 @@ async fn main() {
         Box::new(scene::main_menu::MainMenu::new(&mut ctx).await);
 
     loop {
+        // clear_background(colors::BLACK);
         ctx.update();
 
         current_scene.update(&mut ctx);
 
         current_scene.draw(&mut ctx);
+
+        ctx.virtual_gamepad.draw(&ctx);
 
         if ctx.request_quit {
             break;

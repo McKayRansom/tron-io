@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 ./build_wasm.sh
 
 cargo install basic-http-server         

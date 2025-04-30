@@ -1,6 +1,8 @@
 #!/bin/bash
+set -e
+
 rustup target add wasm32-unknown-unknown
-cargo build --release --target wasm32-unknown-unknown --bin tron-io
+cargo build --target wasm32-unknown-unknown --bin tron-io --release
 
 rm -r deploy/
 mkdir deploy

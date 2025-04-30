@@ -2,16 +2,22 @@ use gamepads::Gamepads;
 use macroquad::input::KeyCode;
 use macroquad::input::{is_key_down, is_key_pressed};
 
+pub mod virtual_gamepad;
+
 pub use tron_io::world::Action;
 
+use crate::context::Context;
+
 /// just pressed, not held down
-pub fn action_pressed(action: Action, gamepads: &Gamepads) -> bool {
-    keyboard_pressed(&action) || gamepad_pressed(&action, gamepads)
+pub fn action_pressed(action: Action, context: &Context) -> bool {
+    keyboard_pressed(&action)
+        || gamepad_pressed(&action, &context.gamepads)
+        || context.virtual_gamepad.action == Some(action)
 }
 
 /// held down for multiple frames
-pub fn action_down(action: Action, gamepads: &Gamepads) -> bool {
-    keyboard_down(&action) || gamepad_down(&action, gamepads)
+pub fn _action_down(action: Action, gamepads: &Gamepads) -> bool {
+    _keyboard_down(&action) || _gamepad_down(&action, gamepads)
 }
 
 fn keyboard_pressed(action: &Action) -> bool {
@@ -36,7 +42,7 @@ fn keyboard_pressed(action: &Action) -> bool {
     }
 }
 
-fn keyboard_down(action: &Action) -> bool {
+fn _keyboard_down(action: &Action) -> bool {
     match action {
         Action::Up => is_key_down(KeyCode::W) || is_key_down(KeyCode::Up),
         Action::Down => is_key_down(KeyCode::S) || is_key_down(KeyCode::Down),
@@ -86,7 +92,7 @@ fn gamepad_pressed(action: &Action, gamepads: &Gamepads) -> bool {
 }
 
 /// checks the action for any of the connected gamepads
-fn gamepad_down(action: &Action, gamepads: &Gamepads) -> bool {
+fn _gamepad_down(action: &Action, gamepads: &Gamepads) -> bool {
     match action {
         Action::Up => gamepads
             .all()
