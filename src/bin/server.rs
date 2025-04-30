@@ -3,7 +3,7 @@ use quad_net::quad_socket::server::SocketHandle;
 use tron_io::world::server::connection::ServerConnectionState;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
-use tron_io::grid::msg::{ClientMsg, WorldState};
+use tron_io::grid::msg::{ClientMsg, ServerMsg, WorldState};
 use tron_io::world::server::WorldServer;
 
 #[derive(Default)]
@@ -50,10 +50,19 @@ impl ClientState {
             if let Some(connection) = &mut self.connection {
                 if let Some(response) = connection.on_msg(&msg, &mut world) {
                     // send the response to the client
-                    out.send_bin(&response).unwrap();
+                    Self::send_msg(out, &response).unwrap();
                 }
             }
 
+        }
+    }
+
+    fn send_msg(out: &mut SocketHandle, msg: &ServerMsg) -> Result<(), ()> {
+        {
+            let this = &mut *out;
+            let data = nanoserde::SerBin::serialize_bin(msg);
+            // println!("Sending msg {:?}", data);
+            this.send(&data)
         }
     }
 
@@ -62,7 +71,7 @@ impl ClientState {
             let mut world = world.lock().unwrap();
             if let Some(connection) = &self.connection {
                 if let Some(response) = connection.update(&mut world) {
-                    out.send_bin(&response).unwrap();
+                    Self::send_msg(out, &response).unwrap();
                 }
             }
             // I don't love that any thread can update the world, but it works for now

@@ -1,3 +1,4 @@
+use macroquad::prelude::info;
 use quad_net::quad_socket::client::QuadSocket;
 
 use crate::grid::msg::{ClientMsg, ServerMsg};
@@ -22,7 +23,19 @@ impl ClientConnection for WorldClientOnline {
     }
 
     fn try_recv(&mut self) -> Option<ServerMsg> {
-        self.socket.try_recv_bin()
+        {
+            let this = &mut self.socket;
+            let bytes = this.try_recv()?;
+            // info!("Received bytes: {:?}", bytes);
+            if let Ok(data) = nanoserde::DeBin::deserialize_bin(&bytes) {
+
+                Some(data)
+            } else {
+                info!("Failed to deserialize bytes: {:?}", bytes);
+                None
+            }
+
+        }
     }
 
     fn update(&mut self) {
