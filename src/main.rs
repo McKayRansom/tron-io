@@ -1,17 +1,17 @@
 use context::Context;
 use gameplay::Gameplay;
-use macroquad::window::{next_frame, Conf};
-use scene::{main_menu::MainMenu, EScene};
+use macroquad::window::{Conf, next_frame};
+use scene::{EScene, main_menu::MainMenu};
 
 // mod bike;
 mod gameplay;
 // mod grid;
+mod assets_path;
+mod audio;
 mod context;
+mod input;
 mod scene;
 mod text;
-mod input;
-mod audio;
-mod assets_path;
 mod ui;
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -41,6 +41,21 @@ fn window_conf() -> Conf {
 
 #[macroquad::main(window_conf)]
 async fn main() {
+    #[cfg(target_arch = "wasm32")]
+    sapp_console_log::init().unwrap();
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        // Initialize logging, and log the "info" level for this crate only, unless
+        // the environment contains `RUST_LOG`.
+        let env = env_logger::Env::new().default_filter_or("tron_io=info");
+        env_logger::Builder::from_env(env)
+            .format_module_path(false)
+            .format_timestamp(None)
+            .init();
+    }
+
+    log::info!("Starting {} v{}", PKG_NAME, VERSION);
+
     let mut ctx = Context::default().await;
 
     let mut current_scene: Box<dyn scene::Scene> =

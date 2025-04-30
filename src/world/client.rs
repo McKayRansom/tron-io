@@ -41,7 +41,7 @@ impl WorldClient {
             Action::Confirm => {
                 if !self.ready {
                     self.ready = true;
-                    println!("Ready!");
+                    log::info!("Ready!");
                     self.connection.send(&ClientMsg {
                         ready: true,
                         state: self.game_state,
@@ -63,7 +63,6 @@ impl WorldClient {
                         let current_dir = self.grid.bikes[player_id as usize].dir;
 
                         if new_dir == current_dir || new_dir == crate::grid::bike::invert_dir(current_dir) {
-                            // println!("Player {} moved {:?}", player_id, dir);
                             return;
                         }
                         let bike_update = BikeUpdate {
@@ -84,7 +83,7 @@ impl WorldClient {
                 }
             }
             _ => {
-                println!("Unimplemented Action: {:?}", action);
+                log::error!("Unimplemented Action: {:?}", action);
             }
         }
     }
@@ -112,7 +111,7 @@ impl WorldClient {
                     WorldState::RoundOver(winner) => self.scores[winner as usize] += 1,
                     WorldState::GameOver(winner) => self.scores[winner as usize] += 1,
                 }
-                println!("Game state changed to {:?}", self.game_state);
+                log::info!("Game state changed to {:?}", self.game_state);
             }
             if self.game_state == WorldState::Playing {
                 if let Some(grid_update) = server_msg.grid_update {
@@ -120,8 +119,7 @@ impl WorldClient {
                     let _ = self.grid.apply_updates(&grid_update);
 
                     if self.grid.hash != grid_update.hash {
-                        println!("Hash mismatch! {} != {}", self.grid.hash, grid_update.hash);
-                        println!("Tick mismatch! {} != {}", self.grid.tick, grid_update.tick);
+                        log::error!("Hash mismatch! {} != {} at tick {}", self.grid.hash, grid_update.hash, grid_update.tick);
                         // context.switch_scene_to = Some(crate::scene::EScene::MainMenu);
                     }
 

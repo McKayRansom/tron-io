@@ -31,6 +31,7 @@ impl Lobby {
 
     pub fn update(&mut self, context: &mut Context) {
         if self.socket.is_none() && self.draw_finished && self.error == false {
+            log::info!("Connecting to server {}", self.socket_addr());
             match QuadSocket::connect(self.socket_addr()) {
                 Ok(socket) => {
                     self.socket = Some(socket);
@@ -38,7 +39,7 @@ impl Lobby {
 
                 }
                 Err(err) => {
-                    dbg!(err);
+                    log::error!("Connecting to server: {:?}", err);
                     self.error = true
                 }
             }

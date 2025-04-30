@@ -194,7 +194,6 @@ impl Grid {
 
             // Compute hash for the bike
             bike.hash(&mut hasher);
-            // println!("Bike {} hash: {}", i, bike_hash); // Replace with appropriate logging if needed
         }
         self.hash = hasher.finish();
         if alive_players == 1 {

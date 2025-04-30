@@ -29,7 +29,7 @@ impl ServerConnectionState {
 
         if self.id.is_none() {
             self.id = Some(world.join());
-            println!("Player {} joined", self.id.unwrap());
+            log::info!("Player {} joined", self.id.unwrap());
         }
 
         if let Some(update) = &msg.update {
@@ -50,7 +50,7 @@ impl ServerConnectionState {
         }
 
         if world.set_ready(self.id.unwrap(), msg.ready) {
-            println!("Player {} is ready: {}", self.id.unwrap(), msg.ready);
+            log::info!("Player {} is ready: {}", self.id.unwrap(), msg.ready);
         }
         if send_response {
             Some(response)
