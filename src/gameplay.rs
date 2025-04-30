@@ -1,8 +1,8 @@
 use macroquad::color::colors;
 use macroquad::prelude::*;
 use tron_io::grid::msg::WorldState;
-use tron_io::world::{self, Action};
 use tron_io::world::client::WorldClient;
+use tron_io::world::{self, Action};
 
 use crate::context::Context;
 use crate::scene::{GameOptions, Scene};
@@ -17,7 +17,7 @@ pub struct Gameplay {
 }
 
 impl Gameplay {
-    pub fn new(_context: &Context, gameoptions: GameOptions) -> Self {
+    pub fn new(context: &Context, gameoptions: GameOptions) -> Self {
         Self {
             // speed: 0.05,
             // last_update: get_time(),
@@ -27,17 +27,13 @@ impl Gameplay {
 
     fn update_player_input(&self) -> Option<world::Action> {
         // input::action_pressed(action, gamepads)
-        if is_key_down(KeyCode::Right) || is_key_down(KeyCode::D)
-        {
+        if is_key_down(KeyCode::Right) || is_key_down(KeyCode::D) {
             Some(Action::Right)
-        } else if is_key_down(KeyCode::Left) || is_key_down(KeyCode::A)
-        {
+        } else if is_key_down(KeyCode::Left) || is_key_down(KeyCode::A) {
             Some(Action::Left)
-        } else if is_key_down(KeyCode::Up) || is_key_down(KeyCode::W)
-        {
+        } else if is_key_down(KeyCode::Up) || is_key_down(KeyCode::W) {
             Some(Action::Up)
-        } else if is_key_down(KeyCode::Down) || is_key_down(KeyCode::S)
-        {
+        } else if is_key_down(KeyCode::Down) || is_key_down(KeyCode::S) {
             Some(Action::Down)
         } else {
             None
@@ -78,13 +74,14 @@ impl Scene for Gameplay {
 
         for i in 0..2 {
             let pos = vec2(10., 60. + 30. * i as f32);
+            let color = PLAYER_COLOR_LOOKUP[self.client.grid.bikes[i].color as usize].0;
             text::draw_text(
                 context,
                 format!("P{}:", i + 1).as_str(),
                 pos.x,
                 pos.y,
                 text::Size::Medium,
-                PLAYER_COLOR_LOOKUP[i],
+                color,
             );
             for j in 0..self.client.scores[i] {
                 draw_rectangle(
@@ -92,7 +89,7 @@ impl Scene for Gameplay {
                     pos.y - BOX_POS_ADJUSTMENT,
                     15.,
                     15.,
-                    PLAYER_COLOR_LOOKUP[i],
+                    color,
                 );
             }
             // text::draw_text(

@@ -28,7 +28,7 @@ impl Cell {
     }
 
     pub fn occupy(&mut self, val: u8, is_bike: bool) {
-        self.val = val | if is_bike { 0b10000000 } else { 0 };
+        self.val = val + 1 | if is_bike { 0b10000000 } else { 0 };
     }
 
     pub fn is_occupied(&self) -> bool {
@@ -37,7 +37,7 @@ impl Cell {
 
     pub fn color(&self) -> Color {
         if self.val != 0 {
-            let mut color = PLAYER_COLOR_LOOKUP[((self.val & 0b01111111) - 1) as usize];
+            let mut color = PLAYER_COLOR_LOOKUP[((self.val & 0b01111111) - 1) as usize].0;
             if self.val & 0b10000000 != 0 {
                 color.r += 0.2;
                 color.g += 0.2;
@@ -50,7 +50,7 @@ impl Cell {
     }
 
     fn free(&mut self, id: u8) {
-        assert_eq!(self.val & 0b01111111, id);
+        assert_eq!(self.val & 0b01111111, id + 1);
         self.val &= 0b01111111;
     }
 }
@@ -135,12 +135,26 @@ impl GridDrawInfo {
     // }
 }
 
-pub const PLAYER_COLOR_LOOKUP: &[Color] = &[
-    colors::GREEN,
-    colors::BLUE,
-    colors::RED,
-    colors::GOLD,
+pub const PLAYER_COLOR_LOOKUP: &[(Color, &str)] = &[
+    (colors::YELLOW, "Yellow"),
+    (colors::GOLD, "Yellow"),
+    (colors::ORANGE, "Orange"),
+    (colors::PINK, "Pink"),
+    (colors::RED, "Red"),
+    (colors::MAROON, "Maroon"),
+    (colors::GREEN, "Green"),
+    (colors::LIME, "Lime"),
+    (colors::DARKGREEN, "Dark-Green"),
+    (colors::SKYBLUE, "Sky-Blue"),
+    (colors::BLUE, "Blue"),
+    (colors::DARKBLUE, "Blue"),
+    (colors::PURPLE, "Purple"),
+    (colors::VIOLET, "Violet"),
+    (colors::DARKPURPLE, "Dark-Purple"),
+    (colors::MAGENTA, "Magenta"),
 ];
+
+pub const DEFAULT_COLOR: u8 = 6; // Green
 
 pub enum UpdateResult {
     GameOver(u8),
@@ -151,8 +165,8 @@ impl Grid {
     pub fn new() -> Self {
         let mut occupied = Occupied::new();
         let bikes = vec![
-            Bike::new(&mut occupied, 1, (8, SQUARES / 2), bike::RIGHT),
-            Bike::new(&mut occupied, 2, (SQUARES - 9, SQUARES / 2), bike::LEFT),
+            Bike::new(&mut occupied, 0, DEFAULT_COLOR, (8, SQUARES / 2), bike::RIGHT),
+            Bike::new(&mut occupied, 1, 10, (SQUARES - 9, SQUARES / 2), bike::LEFT),
             // Bike::new(&mut occupied, 3, (SQUARES / 2, 11), bike::DOWN),
             // Bike::new(&mut occupied, 4, (SQUARES / 2, SQUARES - 11), bike::UP),
         ];
