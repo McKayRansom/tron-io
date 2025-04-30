@@ -97,8 +97,8 @@ impl WorldClient {
             // dbg!(&server_msg);
             self.player_id = Some(server_msg.id);
             if self.game_state != server_msg.state {
-                self.game_state = server_msg.state;
                 self.ready = false;
+                self.game_state = server_msg.state;
                 match self.game_state {
                     WorldState::Waiting => {
                         // New game

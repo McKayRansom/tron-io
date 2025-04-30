@@ -27,7 +27,11 @@ fn keyboard_pressed(action: &Action) -> bool {
                 || is_key_pressed(KeyCode::Z)
                 || is_key_pressed(KeyCode::Enter)
         }
-        Action::Cancel => is_key_pressed(KeyCode::K) || is_key_pressed(KeyCode::X),
+        Action::Cancel => {
+            is_key_pressed(KeyCode::K)
+                || is_key_pressed(KeyCode::Delete)
+                || is_key_pressed(KeyCode::Backspace)
+        }
         Action::Pause => is_key_pressed(KeyCode::Escape) || is_key_pressed(KeyCode::P),
     }
 }

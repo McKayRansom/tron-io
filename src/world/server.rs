@@ -62,7 +62,7 @@ impl WorldServer {
 
     pub fn update(&mut self) {
         match self.world_state {
-            WorldState::Waiting | WorldState::RoundOver(_) => {
+            WorldState::Waiting | WorldState::RoundOver(_) | WorldState::GameOver(_) => {
                 if self.players == 0 {
                     return;
                 }
@@ -72,7 +72,12 @@ impl WorldServer {
                         return;
                     }
                 }
-                self.world_state = WorldState::Playing;
+                if matches!(self.world_state, WorldState::GameOver(_)) {
+                    self.scores = [0; PLAYER_MAX];
+                    self.world_state = WorldState::Waiting;
+                } else {
+                    self.world_state = WorldState::Playing;
+                }
                 self.grid = Grid::new();
                 self.grid.rng.srand(
                     SystemTime::now()
@@ -115,7 +120,6 @@ impl WorldServer {
                     self.last_update.hash = self.grid.hash;
                 }
             }
-            WorldState::GameOver(_) => {}
         }
     }
 }

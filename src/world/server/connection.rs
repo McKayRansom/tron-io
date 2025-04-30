@@ -29,6 +29,7 @@ impl ServerConnectionState {
 
         if self.id.is_none() {
             self.id = Some(world.join());
+            println!("Player {} joined", self.id.unwrap());
         }
 
         if let Some(update) = &msg.update {
@@ -50,12 +51,6 @@ impl ServerConnectionState {
 
         if world.set_ready(self.id.unwrap(), msg.ready) {
             println!("Player {} is ready: {}", self.id.unwrap(), msg.ready);
-            if msg.ready && matches!(world.world_state, WorldState::GameOver(_)) {
-                // if the player is ready and the game is over, find a new game
-                // drop(world);
-                // *self = ClientState::default();
-                println!("Player {} is ready, finding new game", self.id.unwrap());
-            }
         }
         if send_response {
             Some(response)

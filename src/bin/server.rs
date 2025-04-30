@@ -30,6 +30,7 @@ impl ClientState {
                     println!("Adding player to world");
 
                     self.world = Some(world_arc.clone());
+                    self.connection = Some(ServerConnectionState::new());
                 }
             }
             if self.world.is_none() {
@@ -40,6 +41,7 @@ impl ClientState {
 
                 let world = Arc::new(Mutex::new(world));
                 self.world = Some(world.clone());
+                self.connection = Some(ServerConnectionState::new());
                 waiting_queue.other_waiting = Some(world);
             }
         }

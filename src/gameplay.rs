@@ -47,6 +47,12 @@ impl Scene for Gameplay {
             self.client.handle_input(&input::Action::Confirm);
         }
 
+        if matches!(self.client.game_state, WorldState::GameOver(_))
+            && input::action_pressed(input::Action::Cancel, &context.gamepads)
+        {
+            context.switch_scene_to = Some(crate::scene::EScene::MainMenu);
+        }
+
         self.client.update();
 
         if let Some(action) = self.update_player_input() {
@@ -115,9 +121,9 @@ impl Scene for Gameplay {
             let (text, subtext) = match self.client.game_state {
                 WorldState::GameOver(winner) => {
                     if winner == self.client.player_id.unwrap() {
-                        ("Game Won!", "Press [enter] to play again.")
+                        ("Game Won!", "Press [enter] to reboot or [delete] to exit.")
                     } else {
-                        ("Game Lost.", "Press [enter] to play again.")
+                        ("Game Lost.", "Press [enter] to reboot or [delete] to exit.")
                     }
                 }
                 WorldState::Waiting => ("Waiting for players...", "Press [enter] to start."),
