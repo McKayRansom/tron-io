@@ -6,12 +6,12 @@ Basic tron light cycle game (non-copyrighted name pending) to learn Rust gamedev
 - [x] Modify snake-game template to be Tron-game
 - [x] Allow any colors and store colors on grid
 - [x] Main Menu
-- [ ] Touch support
+- [x] Touch support
 - [x] Multiplayer support
 - [ ] Setup public server
 - [x] WASM build
 - [ ] Non-copyrighted name
-- [ ] Boost
+- [x] Boost
 
 ## Wishlist
 - [ ] Brakes or jump?
@@ -20,3 +20,6 @@ Basic tron light cycle game (non-copyrighted name pending) to learn Rust gamedev
 - [ ] Computer sounding names?
 - [ ] Server browser
 - [ ] Teams
+- [ ] Steam armegetron: Explosions, teams, etc..
+- [ ] Sprite or diff thing for head
+- [ ] Head interpolation

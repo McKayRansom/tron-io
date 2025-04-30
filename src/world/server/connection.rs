@@ -1,4 +1,4 @@
-use crate::grid::msg::{ClientMsg, ServerMsg, WorldState};
+use crate::world::{ClientMsg, ServerMsg, WorldState};
 
 use super::WorldServer;
 

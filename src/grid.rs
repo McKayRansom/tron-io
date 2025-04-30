@@ -1,21 +1,20 @@
 use std::hash::{DefaultHasher, Hash, Hasher};
 
-use bike::Bike;
+use bike::{Bike, BikeUpdate};
+use colors::{DEFAULT_COLOR, get_color};
 use macroquad::{
-    color::{Color, colors},
     math::Vec2,
     shapes::{draw_line, draw_rectangle},
     window::{screen_height, screen_width},
 };
+use nanoserde::{DeBin, SerBin};
 
 pub mod bike;
-pub mod msg;
-pub mod ai;
+pub mod colors;
 
 pub const SQUARES: i16 = 80;
 
 pub type Point = (i16, i16);
-
 
 #[derive(Clone)]
 pub struct Cell {
@@ -23,35 +22,46 @@ pub struct Cell {
 }
 
 impl Cell {
+    const BIKE_MASK: u8 = 0b10000000;
+    const BOOST_MASK: u8 = 0b1000000;
+    const COLOR_MASK: u8 = 0b111111;
+
     pub fn new() -> Self {
         Self { val: 0 }
     }
 
-    pub fn occupy(&mut self, val: u8, is_bike: bool) {
-        self.val = val + 1 | if is_bike { 0b10000000 } else { 0 };
+    pub fn occupy(&mut self, val: u8, is_bike: bool, is_boost: bool) {
+        self.val = val + 1
+            | if is_bike { Self::BIKE_MASK } else { 0 }
+            | if is_boost { Self::BOOST_MASK } else { 0 };
     }
 
     pub fn is_occupied(&self) -> bool {
-        self.val & 0b01111111 != 0
+        self.val & Self::COLOR_MASK != 0
     }
 
-    pub fn color(&self) -> Color {
+    pub fn color(&self) -> macroquad::prelude::Color {
         if self.val != 0 {
-            let mut color = PLAYER_COLOR_LOOKUP[((self.val & 0b01111111) - 1) as usize].0;
-            if self.val & 0b10000000 != 0 {
-                color.r += 0.2;
-                color.g += 0.2;
-                color.b += 0.2;
+            let mut color = get_color((self.val & Self::COLOR_MASK) - 1);
+            if self.val & Self::BIKE_MASK != 0 {
+                color.r += 0.3;
+                color.g += 0.3;
+                color.b += 0.3;
+            }
+            if self.val & Self::BOOST_MASK != 0 {
+                color.r -= 0.2;
+                color.g -= 0.2;
+                color.b -= 0.2;
             }
             color
         } else {
-            colors::WHITE
+            macroquad::color::colors::WHITE
         }
     }
 
     fn free(&mut self, id: u8) {
-        assert_eq!(self.val & 0b01111111, id + 1);
-        self.val &= 0b01111111;
+        assert_eq!(self.val & Self::COLOR_MASK, id + 1);
+        self.val &= !Self::BIKE_MASK;
     }
 }
 
@@ -73,7 +83,7 @@ impl Occupied {
         self.occupied[pos.1 as usize][pos.0 as usize].is_occupied()
     }
 
-    pub fn occupy(&mut self, pos: Point, id: u8) -> bool {
+    pub fn occupy(&mut self, pos: Point, id: u8, boost: bool) -> bool {
         if pos.0 < 0 || pos.1 < 0 || pos.0 >= SQUARES || pos.1 >= SQUARES {
             return true;
         }
@@ -81,13 +91,20 @@ impl Occupied {
         if self.occupied[pos.1 as usize][pos.0 as usize].is_occupied() {
             return true;
         }
-        self.occupied[pos.1 as usize][pos.0 as usize].occupy(id, true);
+        self.occupied[pos.1 as usize][pos.0 as usize].occupy(id, true, boost);
         return false;
     }
 
     pub(crate) fn free(&mut self, pos: (i16, i16), id: u8) {
         self.occupied[pos.1 as usize][pos.0 as usize].free(id);
     }
+}
+
+#[derive(DeBin, SerBin, Debug, Clone, Default)]
+pub struct GridUpdateMsg {
+    pub tick: u32,
+    pub hash: u64,
+    pub updates: Vec<BikeUpdate>,
 }
 
 pub struct Grid {
@@ -135,27 +152,6 @@ impl GridDrawInfo {
     // }
 }
 
-pub const PLAYER_COLOR_LOOKUP: &[(Color, &str)] = &[
-    (colors::YELLOW, "Yellow"),
-    (colors::GOLD, "Yellow"),
-    (colors::ORANGE, "Orange"),
-    (colors::PINK, "Pink"),
-    (colors::RED, "Red"),
-    (colors::MAROON, "Maroon"),
-    (colors::GREEN, "Green"),
-    (colors::LIME, "Lime"),
-    (colors::DARKGREEN, "Dark-Green"),
-    (colors::SKYBLUE, "Sky-Blue"),
-    (colors::BLUE, "Blue"),
-    (colors::DARKBLUE, "Blue"),
-    (colors::PURPLE, "Purple"),
-    (colors::VIOLET, "Violet"),
-    (colors::DARKPURPLE, "Dark-Purple"),
-    (colors::MAGENTA, "Magenta"),
-];
-
-pub const DEFAULT_COLOR: u8 = 6; // Green
-
 pub enum UpdateResult {
     GameOver(u8),
     InProgress,
@@ -165,7 +161,13 @@ impl Grid {
     pub fn new() -> Self {
         let mut occupied = Occupied::new();
         let bikes = vec![
-            Bike::new(&mut occupied, 0, DEFAULT_COLOR, (8, SQUARES / 2), bike::RIGHT),
+            Bike::new(
+                &mut occupied,
+                0,
+                DEFAULT_COLOR,
+                (8, SQUARES / 2),
+                bike::RIGHT,
+            ),
             Bike::new(&mut occupied, 1, 10, (SQUARES - 9, SQUARES / 2), bike::LEFT),
             // Bike::new(&mut occupied, 3, (SQUARES / 2, 11), bike::DOWN),
             // Bike::new(&mut occupied, 4, (SQUARES / 2, SQUARES - 11), bike::UP),
@@ -185,9 +187,6 @@ impl Grid {
         let mut hasher = DefaultHasher::new();
         for (i, bike) in self.bikes.iter_mut().enumerate() {
             if bike.update(&mut self.occupied) {
-                // player died
-                // return UpdateResult::GameOver;
-            } else {
                 winning_player = Some(i as u8);
                 alive_players += 1;
             }
@@ -210,10 +209,10 @@ impl Grid {
             draw_info.offset_y,
             draw_info.game_size,
             draw_info.game_size,
-            colors::BLACK,
+            macroquad::color::colors::BLACK,
         );
 
-        const GRID_LINE_COLOR: Color = colors::DARKGRAY;
+        const GRID_LINE_COLOR: macroquad::color::Color = macroquad::color::colors::DARKGRAY;
         const GRID_LINE_INTERVAL: i16 = 4;
 
         // draw lines every 4 squares
@@ -240,6 +239,8 @@ impl Grid {
                 GRID_LINE_COLOR,
             );
         }
+        // Draw bikes
+        // TODO: draw player names, idea: use different fonts to show alive/boost/dead
         for y in 0..SQUARES {
             for x in 0..SQUARES {
                 if self.occupied.occupied[y as usize][x as usize].is_occupied() {
@@ -253,6 +254,22 @@ impl Grid {
                     );
                 }
             }
+        }
+    }
+}
+
+impl Grid {
+    pub fn apply_updates(&mut self, updates: &GridUpdateMsg) -> UpdateResult {
+        // tick and seed?
+        for update in updates.updates.iter() {
+            let bike = self.bikes.get_mut(update.id as usize).unwrap();
+            bike.apply_update(update);
+        }
+        if self.tick != updates.tick {
+            self.tick = updates.tick;
+            self.update()
+        } else {
+            UpdateResult::InProgress
         }
     }
 }

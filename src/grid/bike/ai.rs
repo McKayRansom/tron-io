@@ -1,8 +1,7 @@
-use super::{
-    Occupied, Point,
-    bike::{Bike, DOWN, LEFT, RIGHT, UP},
-    msg::BikeUpdate,
-};
+use crate::grid::{Occupied, Point};
+
+use super::*;
+
 
 pub const DIRS: &[Point] = &[UP, DOWN, LEFT, RIGHT];
 pub const DIRS_REV: &[Point] = &[RIGHT, LEFT, DOWN, UP];
@@ -26,6 +25,7 @@ impl Bike {
                 if !grid.is_occupied(new_head) {
                     if self.dir != *dir {
                         return Some(BikeUpdate {
+                            boost: false,
                             id: self.id,
                             dir: *dir,
                         });

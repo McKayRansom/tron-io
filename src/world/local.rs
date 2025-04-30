@@ -1,9 +1,9 @@
 use std::collections::VecDeque;
 
-use crate::grid::msg::{ClientMsg, ServerMsg};
-
-use super::{server::{connection::ServerConnectionState, WorldServer}, ClientConnection};
-
+use super::{
+    ClientConnection, ClientMsg, ServerMsg,
+    server::{WorldServer, connection::ServerConnectionState},
+};
 
 pub struct WorldClientLocal {
     response: VecDeque<ServerMsg>,
@@ -22,7 +22,6 @@ impl WorldClientLocal {
 }
 
 impl ClientConnection for WorldClientLocal {
-
     fn send(&mut self, msg: &ClientMsg) {
         self.connection.on_msg(msg, &mut self.world);
     }
@@ -37,5 +36,4 @@ impl ClientConnection for WorldClientLocal {
         }
         self.world.update();
     }
-
 }

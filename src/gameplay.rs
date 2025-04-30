@@ -1,67 +1,40 @@
 use macroquad::color::colors;
 use macroquad::prelude::*;
-use tron_io::grid::msg::WorldState;
 use tron_io::world::client::WorldClient;
-use tron_io::world::{self, Action};
+use tron_io::world::WorldState;
 
 use crate::context::Context;
 use crate::scene::{GameOptions, Scene};
 use crate::text::draw_text_screen_centered;
 use crate::{input, text};
-use tron_io::grid::PLAYER_COLOR_LOOKUP;
 
 pub struct Gameplay {
-    // speed: f64,
-    // last_update: f64,
     client: WorldClient,
 }
 
 impl Gameplay {
     pub fn new(_context: &Context, gameoptions: GameOptions) -> Self {
         Self {
-            // speed: 0.05,
-            // last_update: get_time(),
             client: gameoptions.client,
-        }
-    }
-
-    fn update_player_input(&self) -> Option<world::Action> {
-        // input::action_pressed(action, gamepads)
-        if is_key_down(KeyCode::Right) || is_key_down(KeyCode::D) {
-            Some(Action::Right)
-        } else if is_key_down(KeyCode::Left) || is_key_down(KeyCode::A) {
-            Some(Action::Left)
-        } else if is_key_down(KeyCode::Up) || is_key_down(KeyCode::W) {
-            Some(Action::Up)
-        } else if is_key_down(KeyCode::Down) || is_key_down(KeyCode::S) {
-            Some(Action::Down)
-        } else {
-            None
         }
     }
 }
 
 impl Scene for Gameplay {
     fn update(&mut self, context: &mut Context) {
-        if input::action_pressed(input::Action::Confirm, context) {
-            self.client.handle_input(&input::Action::Confirm);
-        }
+        for action in context.input.actions.iter() {
+            // Edgde case: handle somewhere else?
+            if *action == input::Action::Cancel && matches!(self.client.game_state, WorldState::GameOver(_))
+            {
+                context.switch_scene_to = Some(crate::scene::EScene::MainMenu);
+            }
 
-        if matches!(self.client.game_state, WorldState::GameOver(_))
-            && input::action_pressed(input::Action::Cancel, context)
-        {
-            context.switch_scene_to = Some(crate::scene::EScene::MainMenu);
+            self.client.handle_input(*action);
         }
-
         self.client.update();
-
-        if let Some(action) = self.update_player_input() {
-            self.client.handle_input(&action);
-        }
     }
 
     fn draw(&mut self, context: &mut Context) {
-
         self.client.grid.draw();
         text::draw_text(context, "WN:", 10., 30., text::Size::Medium, colors::WHITE);
 
@@ -79,7 +52,7 @@ impl Scene for Gameplay {
 
         for i in 0..2 {
             let pos = vec2(10., 60. + 30. * i as f32);
-            let color = PLAYER_COLOR_LOOKUP[self.client.grid.bikes[i].color as usize].0;
+            let color = self.client.grid.bikes[i].get_color();
             text::draw_text(
                 context,
                 format!("P{}:", i + 1).as_str(),

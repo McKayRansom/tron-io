@@ -69,7 +69,7 @@ async fn main() {
 
         current_scene.draw(&mut ctx);
 
-        ctx.virtual_gamepad.draw(&ctx);
+        ctx.input.virtual_gamepad.draw(&ctx);
 
         if ctx.request_quit {
             break;

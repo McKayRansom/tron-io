@@ -1,125 +1,73 @@
 use gamepads::Gamepads;
-use macroquad::input::KeyCode;
-use macroquad::input::{is_key_down, is_key_pressed};
+use macroquad::input::{get_keys_pressed, KeyCode};
 
 pub mod virtual_gamepad;
 
 pub use tron_io::world::Action;
 
-use crate::context::Context;
-
-/// just pressed, not held down
-pub fn action_pressed(action: Action, context: &Context) -> bool {
-    keyboard_pressed(&action)
-        || gamepad_pressed(&action, &context.gamepads)
-        || context.virtual_gamepad.action == Some(action)
+pub struct InputContext {
+    pub actions: Vec<Action>,
+    gamepads: Gamepads,
+    pub virtual_gamepad: virtual_gamepad::VirtualGamepad,
 }
 
-/// held down for multiple frames
-pub fn _action_down(action: Action, gamepads: &Gamepads) -> bool {
-    _keyboard_down(&action) || _gamepad_down(&action, gamepads)
-}
-
-fn keyboard_pressed(action: &Action) -> bool {
-    match action {
-        Action::Up => is_key_pressed(KeyCode::W) || is_key_pressed(KeyCode::Up),
-        Action::Down => is_key_pressed(KeyCode::S) || is_key_pressed(KeyCode::Down),
-        Action::Left => is_key_pressed(KeyCode::A) || is_key_pressed(KeyCode::Left),
-        Action::Right => is_key_pressed(KeyCode::D) || is_key_pressed(KeyCode::Right),
-        Action::Rewind => is_key_pressed(KeyCode::K) || is_key_pressed(KeyCode::X),
-        Action::Reset => is_key_pressed(KeyCode::L) || is_key_pressed(KeyCode::C),
-        Action::Confirm => {
-            is_key_pressed(KeyCode::J)
-                || is_key_pressed(KeyCode::Z)
-                || is_key_pressed(KeyCode::Enter)
+impl InputContext {
+    pub fn new() -> Self {
+        Self {
+            actions: Vec::new(),
+            gamepads: Gamepads::new(),
+            virtual_gamepad: virtual_gamepad::VirtualGamepad::new(),
         }
-        Action::Cancel => {
-            is_key_pressed(KeyCode::K)
-                || is_key_pressed(KeyCode::Delete)
-                || is_key_pressed(KeyCode::Backspace)
+    }
+
+    fn keycode_to_action(key: KeyCode) -> Option<Action> {
+        match key {
+            KeyCode::W | KeyCode::Up => Some(Action::Up),
+            KeyCode::S | KeyCode::Down => Some(Action::Down),
+            KeyCode::A | KeyCode::Left => Some(Action::Left),
+            KeyCode::D | KeyCode::Right => Some(Action::Right),
+            KeyCode::X => Some(Action::Rewind),
+            KeyCode::L | KeyCode::C => Some(Action::Reset),
+            KeyCode::J | KeyCode::Z | KeyCode::Enter => Some(Action::Confirm),
+            KeyCode::K | KeyCode::Delete | KeyCode::Backspace => Some(Action::Cancel),
+            _ => None,
         }
-        Action::Pause => is_key_pressed(KeyCode::Escape) || is_key_pressed(KeyCode::P),
     }
-}
 
-fn _keyboard_down(action: &Action) -> bool {
-    match action {
-        Action::Up => is_key_down(KeyCode::W) || is_key_down(KeyCode::Up),
-        Action::Down => is_key_down(KeyCode::S) || is_key_down(KeyCode::Down),
-        Action::Left => is_key_down(KeyCode::A) || is_key_down(KeyCode::Left),
-        Action::Right => is_key_down(KeyCode::D) || is_key_down(KeyCode::Right),
-        Action::Reset => is_key_down(KeyCode::L) || is_key_down(KeyCode::C),
-        Action::Rewind => is_key_down(KeyCode::K) || is_key_down(KeyCode::X),
-        Action::Confirm => {
-            is_key_down(KeyCode::J) || is_key_down(KeyCode::Z) || is_key_down(KeyCode::Enter)
+    fn gamepad_to_action(button: gamepads::Button) -> Option<Action> {
+        match button {
+            gamepads::Button::DPadUp => Some(Action::Up),
+            gamepads::Button::DPadDown => Some(Action::Down),
+            gamepads::Button::DPadLeft => Some(Action::Left),
+            gamepads::Button::DPadRight => Some(Action::Right),
+            gamepads::Button::ActionUp => Some(Action::Reset),
+            gamepads::Button::ActionDown => Some(Action::Confirm),
+            gamepads::Button::ActionLeft => Some(Action::Rewind),
+            gamepads::Button::ActionRight => Some(Action::Cancel),
+            gamepads::Button::RightCenterCluster => Some(Action::Pause),
+            _ => None,
         }
-        Action::Cancel => is_key_down(KeyCode::K) || is_key_down(KeyCode::X),
-        Action::Pause => is_key_down(KeyCode::Escape) || is_key_down(KeyCode::P),
     }
-}
 
-/// checks the action for any of the connected gamepads
-fn gamepad_pressed(action: &Action, gamepads: &Gamepads) -> bool {
-    match action {
-        Action::Up => gamepads
-            .all()
-            .any(|g| g.is_just_pressed(gamepads::Button::DPadUp)),
-        Action::Down => gamepads
-            .all()
-            .any(|g| g.is_just_pressed(gamepads::Button::DPadDown)),
-        Action::Left => gamepads
-            .all()
-            .any(|g| g.is_just_pressed(gamepads::Button::DPadLeft)),
-        Action::Right => gamepads
-            .all()
-            .any(|g| g.is_just_pressed(gamepads::Button::DPadRight)),
-        Action::Confirm => gamepads
-            .all()
-            .any(|g| g.is_just_pressed(gamepads::Button::ActionDown)),
-        Action::Cancel => gamepads
-            .all()
-            .any(|g| g.is_just_pressed(gamepads::Button::ActionRight)),
-        Action::Rewind => gamepads
-            .all()
-            .any(|g| g.is_just_pressed(gamepads::Button::ActionLeft)),
-        Action::Reset => gamepads
-            .all()
-            .any(|g| g.is_just_pressed(gamepads::Button::ActionUp)),
-        Action::Pause => gamepads
-            .all()
-            .any(|g| g.is_just_pressed(gamepads::Button::RightCenterCluster)),
-    }
-}
+    pub fn update(&mut self) {
+        self.actions.clear();
 
-/// checks the action for any of the connected gamepads
-fn _gamepad_down(action: &Action, gamepads: &Gamepads) -> bool {
-    match action {
-        Action::Up => gamepads
-            .all()
-            .any(|g| g.is_currently_pressed(gamepads::Button::DPadUp)),
-        Action::Down => gamepads
-            .all()
-            .any(|g| g.is_currently_pressed(gamepads::Button::DPadDown)),
-        Action::Left => gamepads
-            .all()
-            .any(|g| g.is_currently_pressed(gamepads::Button::DPadLeft)),
-        Action::Right => gamepads
-            .all()
-            .any(|g| g.is_currently_pressed(gamepads::Button::DPadRight)),
-        Action::Confirm => gamepads
-            .all()
-            .any(|g| g.is_currently_pressed(gamepads::Button::ActionDown)),
-        Action::Cancel => gamepads
-            .all()
-            .any(|g| g.is_currently_pressed(gamepads::Button::ActionRight)),
-        Action::Rewind => gamepads
-            .all()
-            .any(|g| g.is_currently_pressed(gamepads::Button::ActionLeft)),
-        Action::Reset => gamepads
-            .all()
-            .any(|g| g.is_currently_pressed(gamepads::Button::ActionUp)),
-        Action::Pause => gamepads
-            .all()
-            .any(|g| g.is_currently_pressed(gamepads::Button::RightCenterCluster)),
+        if let Some(action) = self.virtual_gamepad.update() {
+            self.actions.push(action);
+        }
+        for key in get_keys_pressed() {
+            if let Some(action) = Self::keycode_to_action(key) {
+                self.actions.push(action);
+            }
+        }
+        self.gamepads.poll();
+
+        for gamepad in self.gamepads.all() {
+            for button in gamepad.all_just_pressed() {
+                if let Some(action) = Self::gamepad_to_action(button) {
+                    self.actions.push(action);
+                }
+            }
+        }
     }
 }

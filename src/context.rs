@@ -1,19 +1,17 @@
-use gamepads::Gamepads;
 use macroquad::{
     math::Vec2, text::{load_ttf_font, Font}, time::get_time, window::{screen_height, screen_width}
 };
 
-use crate::{assets_path::determine_asset_path, audio, input::virtual_gamepad::VirtualGamepad, scene::EScene};
+use crate::{assets_path::determine_asset_path, audio, input::InputContext, scene::EScene};
+
 
 pub struct Context {
     pub font: Font,
-    #[allow(dead_code)]
     pub screen_size: Vec2,
     pub switch_scene_to: Option<EScene>,
     pub request_quit: bool,
-    pub gamepads: Gamepads,
-    pub virtual_gamepad: VirtualGamepad,
     pub audio: audio::AudioAtlas,
+    pub input: InputContext,
     pub time: f64,
 }
 
@@ -26,17 +24,15 @@ impl Context {
             screen_size: Vec2::new(0.0, 0.0),
             switch_scene_to: None,
             request_quit: false,
-            gamepads: Gamepads::new(),
-            virtual_gamepad: VirtualGamepad::new(),
+            input: InputContext::new(),
             audio: audio::AudioAtlas::new(&base_assets_path).await,
             time: get_time(),
         }
     }
 
     pub fn update(&mut self) {
-        self.gamepads.poll();
+        self.input.update();
         self.screen_size = Vec2::new(screen_width(), screen_height());
         self.time = get_time();
-        self.virtual_gamepad = self.virtual_gamepad.update(self);
     }
 }

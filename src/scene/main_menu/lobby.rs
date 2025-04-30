@@ -1,9 +1,6 @@
 use macroquad::color::colors;
 use quad_net::quad_socket::client::QuadSocket;
-use tron_io::{
-    grid::msg::ClientMsg,
-    world::{client::WorldClient, online::WorldClientOnline},
-};
+use tron_io::world::{client::WorldClient, online::WorldClientOnline, ClientMsg, WorldState};
 
 use crate::{context::Context, text};
 
@@ -54,7 +51,7 @@ impl Lobby {
                     }
                 }
                 socket.send_bin(&ClientMsg {
-                    state: tron_io::grid::msg::WorldState::Waiting,
+                    state: WorldState::Waiting,
                     update: None,
                     ready: false,
                 });

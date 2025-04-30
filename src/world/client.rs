@@ -1,12 +1,9 @@
 use crate::{
-    grid::{
-        Grid,
-        msg::{BikeUpdate, ClientMsg, GridUpdateMsg, WorldState},
-    },
+    grid::{Grid, bike::BikeUpdate},
     world::PLAYER_MAX,
 };
 
-use super::{Action, ClientConnection};
+use super::{ClientConnection, ClientMsg, GridUpdateMsg, WorldState};
 
 pub struct WorldClient {
     pub grid: Grid,
@@ -35,10 +32,9 @@ impl WorldClient {
         }
     }
 
-    pub fn handle_input(&mut self, action: &super::Action) {
-        // wait for players
-        match action {
-            Action::Confirm => {
+    pub fn handle_input(&mut self, action: super::Action) {
+        match self.game_state {
+            WorldState::Waiting | WorldState::RoundOver(_) | WorldState::GameOver(_) => {
                 if !self.ready {
                     self.ready = true;
                     log::info!("Ready!");
@@ -49,26 +45,11 @@ impl WorldClient {
                     });
                 }
             }
-            Action::Left | Action::Right | Action::Up | Action::Down => {
-                if self.game_state == WorldState::Playing {
-                    if let Some(player_id) = self.player_id {
-                        let new_dir = match action {
-                            Action::Left => crate::grid::bike::LEFT,
-                            Action::Right => crate::grid::bike::RIGHT,
-                            Action::Up => crate::grid::bike::UP,
-                            Action::Down => crate::grid::bike::DOWN,
-                            _ => unreachable!(),
-                        };
-
-                        let current_dir = self.grid.bikes[player_id as usize].dir;
-
-                        if new_dir == current_dir || new_dir == crate::grid::bike::invert_dir(current_dir) {
-                            return;
-                        }
-                        let bike_update = BikeUpdate {
-                            id: player_id,
-                            dir: new_dir,
-                        };
+            WorldState::Playing => {
+                if let Some(player_id) = self.player_id {
+                    if let Some(bike_update) =
+                        self.grid.bikes[player_id as usize].handle_action(action)
+                    {
                         self.player_update = Some(bike_update.clone());
                         self.connection.send(&ClientMsg {
                             ready: self.ready,
@@ -82,9 +63,7 @@ impl WorldClient {
                     }
                 }
             }
-            _ => {
-                log::error!("Unimplemented Action: {:?}", action);
-            }
+
         }
     }
 
@@ -119,7 +98,12 @@ impl WorldClient {
                     let _ = self.grid.apply_updates(&grid_update);
 
                     if self.grid.hash != grid_update.hash {
-                        log::error!("Hash mismatch! {} != {} at tick {}", self.grid.hash, grid_update.hash, grid_update.tick);
+                        log::error!(
+                            "Hash mismatch! {} != {} at tick {}",
+                            self.grid.hash,
+                            grid_update.hash,
+                            grid_update.tick
+                        );
                         // context.switch_scene_to = Some(crate::scene::EScene::MainMenu);
                     }
 

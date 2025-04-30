@@ -1,9 +1,7 @@
 use macroquad::prelude::info;
 use quad_net::quad_socket::client::QuadSocket;
 
-use crate::grid::msg::{ClientMsg, ServerMsg};
-
-use super::ClientConnection;
+use super::{ClientConnection, ClientMsg, ServerMsg};
 
 
 pub struct WorldClientOnline {

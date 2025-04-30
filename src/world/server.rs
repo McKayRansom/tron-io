@@ -1,7 +1,8 @@
 use crate::grid::{
-    Grid, UpdateResult,
-    msg::{BikeUpdate, GridUpdateMsg, WorldState},
+    bike::BikeUpdate, Grid, GridUpdateMsg, UpdateResult
 };
+
+use super::WorldState;
 
 pub mod connection;
 
@@ -98,7 +99,7 @@ impl WorldServer {
                 self.last_update = GridUpdateMsg::default();
             }
             WorldState::Playing => {
-                if Self::get_time() - self.last_update_time > 0.05 {
+                if Self::get_time() - self.last_update_time > (1.0 / 60.0) {
                     self.last_update_time = Self::get_time();
                     self.last_update = self.next_update.clone();
                     self.next_update.updates.clear();
