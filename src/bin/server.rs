@@ -63,7 +63,7 @@ impl ClientState {
         {
             let this = &mut *out;
             let data = nanoserde::SerBin::serialize_bin(msg);
-            log::debug!("Sending msg {:?}", data);
+            log::debug!("Sending msg {:?}", msg);
             if let Err(err) = this.send(&data) {
                 log::error!("Failed to send message: {:?}", err);
             }
@@ -95,7 +95,7 @@ struct WaitingQueue {
 pub fn main() -> std::io::Result<()> {
     // Initialize logging, and log the "info" level for this crate only, unless
     // the environment contains `RUST_LOG`.
-    let env = env_logger::Env::new().default_filter_or("server=info");
+    let env = env_logger::Env::new().default_filter_or("debug");
     env_logger::Builder::from_env(env)
         .format_module_path(false)
         .format_timestamp(Some(env_logger::TimestampPrecision::Millis))
