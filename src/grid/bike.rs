@@ -82,6 +82,7 @@ impl Bike {
             Action::Up => crate::grid::bike::UP,
             Action::Down => crate::grid::bike::DOWN,
             Action::Confirm => {
+                dbg!("applying boost");
                 if self.boost_count == 0 {
                     return None;
                 }
