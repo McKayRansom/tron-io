@@ -53,10 +53,10 @@ pub struct Bike {
     pub id: u8,
     color: u8,
     head: Point,
-    pub dir: Point,
-    pub alive: bool,
-    pub boost: Ticks,
-    pub speed: Ticks,
+    dir: Point,
+    alive: bool,
+    speed: Ticks,
+    pub boost_time: Ticks,
     pub boost_count: u8,
 }
 
@@ -70,7 +70,7 @@ impl Bike {
             dir,
             alive: true,
             speed: 0,
-            boost: 0,
+            boost_time: 0,
             boost_count: BOOST_COUNT,
         }
     }
@@ -85,7 +85,6 @@ impl Bike {
                 if self.boost_count == 0 {
                     return None;
                 }
-                dbg!("Boosting");
                 return Some(BikeUpdate {
                     id: self.id,
                     dir: self.dir,
@@ -112,8 +111,7 @@ impl Bike {
     pub fn apply_update(&mut self, update: &BikeUpdate) {
         self.dir = update.dir;
         if update.boost && self.boost_count > 0 {
-            dbg!("Applying boost");
-            self.boost = BOOST_TIME;
+            self.boost_time = BOOST_TIME;
             self.boost_count -= 1;
         }
     }
@@ -127,9 +125,8 @@ impl Bike {
             self.speed -= 1;
             return true;
         } else {
-            self.speed = if self.boost > 0 {
-                dbg!("Speeding up");
-                self.boost -= 1;
+            self.speed = if self.boost_time > 0 {
+                self.boost_time -= 1;
                 BOOST_SPEED
             } else {
                 NORMAL_SPEED
@@ -139,7 +136,7 @@ impl Bike {
 
         let new_head = (self.head.0 + self.dir.0, self.head.1 + self.dir.1);
 
-        if grid.occupy(new_head, self.color, self.boost > 0) {
+        if grid.occupy(new_head, self.color, self.boost_time > 0) {
             self.alive = false;
             false
         } else {

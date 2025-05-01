@@ -82,7 +82,6 @@ impl WorldServer {
                 }
                 for i in 0..self.players as usize {
                     if !self.ready[i] {
-                        // dbg!("Waiting for player {}", i);
                         return;
                     }
                 }

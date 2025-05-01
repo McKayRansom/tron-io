@@ -63,16 +63,12 @@ impl WorldClient {
                     }
                 }
             }
-
         }
     }
 
-    // pub fn update(&mut self, context: &mut Context)
     pub fn update(&mut self) {
-        // MULTILAYER
         while let Some(server_msg) = self.connection.try_recv() {
-            // self.grid.apply_updates(&grid_update);
-            // dbg!(&server_msg);
+            log::debug!("Received server message: {:?}", server_msg);
             self.player_id = Some(server_msg.id);
             if self.game_state != server_msg.state {
                 self.ready = false;
