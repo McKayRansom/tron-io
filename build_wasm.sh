@@ -4,7 +4,7 @@ set -e
 rustup target add wasm32-unknown-unknown
 cargo build --target wasm32-unknown-unknown --bin tron-io --release
 
-rm -r deploy/
+rm -rf deploy/
 mkdir deploy
 
 cp static/* deploy/

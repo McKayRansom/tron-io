@@ -39,13 +39,14 @@ impl ServerConnectionState {
         self.state = msg.state;
         
         let last_update = world.get_last_update();
-        if self.tick != last_update.tick {
+        if self.tick != last_update.tick && world.world_state == WorldState::Playing {
+            log::debug!("Tick {} != {}", self.tick, last_update.tick);
             response.grid_update = Some(last_update.clone());
             send_response = true;
         }
 
         if self.state != world.world_state {
-            self.state = world.world_state;
+            log::debug!("State {:?} != {:?}", self.state, world.world_state);
             send_response = true;
         }
 
@@ -66,8 +67,12 @@ impl ServerConnectionState {
             grid_update: None,
         };
         let last_update = world.get_last_update();
-        if self.tick != last_update.tick {
+        if self.tick != last_update.tick && world.world_state == WorldState::Playing {
+            log::debug!("Tick {} != {}", self.tick, last_update.tick);
             response.grid_update = Some(last_update.clone());
+            Some(response)
+        } else if self.state != world.world_state {
+            log::debug!("State {:?} != {:?}", self.state, world.world_state);
             Some(response)
         } else {
             None
