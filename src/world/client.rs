@@ -35,7 +35,7 @@ impl WorldClient {
     pub fn handle_input(&mut self, action: super::Action) {
         match self.game_state {
             WorldState::Waiting | WorldState::RoundOver(_) | WorldState::GameOver(_) => {
-                if !self.ready {
+                if action == super::Action::Confirm && !self.ready {
                     self.ready = true;
                     log::info!("Ready!");
                     self.connection.send(&ClientMsg {
@@ -96,7 +96,9 @@ impl WorldClient {
             if self.game_state == WorldState::Playing {
                 if let Some(grid_update) = server_msg.grid_update {
                     if grid_update.tick != self.grid.tick + 1 {
-                        log::warn!("Tick {} != {} + 1", grid_update.tick, self.grid.tick);
+                        // unfortuantely, This is expected as the server sends out ticks every 10ms 
+                        //  we may not get back before the server sends a duplicate
+                        // log::warn!("Tick {} != {} + 1", grid_update.tick, self.grid.tick);
                     } else {
                         self.player_update = None;
                         let _ = self.grid.apply_updates(&grid_update);
