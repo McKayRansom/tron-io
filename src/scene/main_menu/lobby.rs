@@ -21,9 +21,9 @@ impl Lobby {
 
     fn socket_addr(&self) -> String {
         #[cfg(not(target_arch = "wasm32"))]
-        return "localhost:8090".to_string();
+        return "ec2-3-144-4-46.us-east-2.compute.amazonaws.com:8090".to_string();
         #[cfg(target_arch = "wasm32")]
-        return "ws://localhost:8091".to_string();
+        return "ws://ec2-3-144-4-46.us-east-2.compute.amazonaws.com:8091".to_string();
     }
 
     pub fn update(&mut self, context: &mut Context) {

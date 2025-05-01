@@ -53,18 +53,20 @@ impl ClientState {
             if let Some(connection) = &mut self.connection {
                 if let Some(response) = connection.on_msg(&msg, &mut world) {
                     // send the response to the client
-                    Self::send_msg(out, &response).unwrap();
+                    Self::send_msg(out, &response);
                 }
             }
         }
     }
 
-    fn send_msg(out: &mut SocketHandle, msg: &ServerMsg) -> Result<(), ()> {
+    fn send_msg(out: &mut SocketHandle, msg: &ServerMsg) {
         {
             let this = &mut *out;
             let data = nanoserde::SerBin::serialize_bin(msg);
             log::debug!("Sending msg {:?}", data);
-            this.send(&data)
+            if let Err(err) = this.send(&data) {
+                log::error!("Failed to send message: {:?}", err);
+            }
         }
     }
 
@@ -73,7 +75,7 @@ impl ClientState {
             let mut world = world.lock().unwrap();
             if let Some(connection) = &self.connection {
                 if let Some(response) = connection.update(&mut world) {
-                    Self::send_msg(out, &response).unwrap();
+                    Self::send_msg(out, &response);
                 }
             }
             // I don't love that any thread can update the world, but it works for now
