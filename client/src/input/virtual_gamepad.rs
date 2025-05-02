@@ -10,10 +10,10 @@ use macroquad::window::{screen_height, screen_width};
 use tron_io_world::Action;
 
 const VIRTUAL_BUTTON_COLOR: Color = Color::new(0.5, 0.5, 0.5, 1.0);
-const VIRTUAL_BUTTON_SIZE: f32 = 50.0;
 
 #[derive(Clone, Copy)]
 pub struct VirtualGamepad {
+    virtual_button_size: f32,
     is_active: bool,
     screen_size: Vec2,
     action: Option<Action>,
@@ -24,6 +24,7 @@ pub struct VirtualGamepad {
 impl VirtualGamepad {
     pub fn new() -> Self {
         Self {
+            virtual_button_size: 50.,
             is_active: false,
             screen_size: Vec2::new(0.0, 0.0),
             action: None,
@@ -34,32 +35,33 @@ impl VirtualGamepad {
 
     pub fn virtual_button_rect(&self, action: Action) -> Rect {
         let button_center: Vec2 = Vec2::new(
-            self.screen_size.x - VIRTUAL_BUTTON_SIZE * 2.,
+            self.screen_size.x - self.virtual_button_size * 2.,
             self.screen_size.y / 2.,
         );
-        let arrow_center: Vec2 = Vec2::new(VIRTUAL_BUTTON_SIZE * 2., self.screen_size.y / 2.);
+        let arrow_center: Vec2 = Vec2::new(self.virtual_button_size * 2., self.screen_size.y / 2.);
         let pos = match action {
-            Action::Up => arrow_center + Vec2::new(0., -VIRTUAL_BUTTON_SIZE),
-            Action::Down => arrow_center + Vec2::new(0., VIRTUAL_BUTTON_SIZE),
-            Action::Left => arrow_center + Vec2::new(-VIRTUAL_BUTTON_SIZE, 0.),
-            Action::Right => arrow_center + Vec2::new(VIRTUAL_BUTTON_SIZE, 0.),
-            Action::Confirm => button_center + Vec2::new(-VIRTUAL_BUTTON_SIZE, 0.),
-            Action::Cancel => button_center + Vec2::new(0., -VIRTUAL_BUTTON_SIZE),
+            Action::Up => arrow_center + Vec2::new(0., -self.virtual_button_size),
+            Action::Down => arrow_center + Vec2::new(0., self.virtual_button_size),
+            Action::Left => arrow_center + Vec2::new(-self.virtual_button_size, 0.),
+            Action::Right => arrow_center + Vec2::new(self.virtual_button_size, 0.),
+            Action::Confirm => button_center + Vec2::new(self.virtual_button_size, 0.),
+            Action::Cancel => button_center + Vec2::new(0., self.virtual_button_size),
             Action::Reset => todo!(),
             Action::Rewind => todo!(),
             Action::Pause => todo!(),
         };
         Rect::new(
-            pos.x - VIRTUAL_BUTTON_SIZE / 2.,
-            pos.y - VIRTUAL_BUTTON_SIZE / 2.,
-            VIRTUAL_BUTTON_SIZE,
-            VIRTUAL_BUTTON_SIZE,
+            pos.x - self.virtual_button_size / 2.,
+            pos.y - self.virtual_button_size / 2.,
+            self.virtual_button_size,
+            self.virtual_button_size,
         )
     }
 
     pub fn update(&mut self) -> Option<Action> {
         if is_mouse_button_pressed(MouseButton::Left) {
             self.screen_size = Vec2::new(screen_width(), screen_height());
+            self.virtual_button_size = self.screen_size.x / 16.;
             self.is_active = true;
             self.last_active_time = get_time();
             let mouse_pos = mouse_position().into();
@@ -117,8 +119,8 @@ impl VirtualGamepad {
         text::draw_text_centered_pos(
             context,
             text,
-            rect.x + VIRTUAL_BUTTON_SIZE / 2., // + size / 2.0 + padding,
-            rect.y + VIRTUAL_BUTTON_SIZE,      // + size / 2.0 + padding,
+            rect.x + self.virtual_button_size / 2., // + size / 2.0 + padding,
+            rect.y + self.virtual_button_size,      // + size / 2.0 + padding,
             crate::text::Size::Medium,
             colors::WHITE,
         );
