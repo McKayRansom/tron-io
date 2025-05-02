@@ -35,7 +35,7 @@ impl ClientConnection for WorldClientOnline {
         }
     }
 
-    fn update(&mut self) {
+    fn update(&mut self, _time: f64) {
         
     }
 }

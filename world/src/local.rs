@@ -30,10 +30,10 @@ impl ClientConnection for WorldClientLocal {
         self.response.pop_front()
     }
 
-    fn update(&mut self) {
+    fn update(&mut self, time: f64) {
         if let Some(response) = self.connection.update(&self.world) {
             self.response.push_back(response);
         }
-        self.world.update();
+        self.world.update(time);
     }
 }

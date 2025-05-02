@@ -32,7 +32,7 @@ impl Scene for Gameplay {
 
             self.client.handle_input(*action);
         }
-        self.client.update();
+        self.client.update(get_time());
     }
 
     fn draw(&mut self, context: &mut Context) {

@@ -59,6 +59,6 @@ pub enum Action {
 pub trait ClientConnection {
     fn send(&mut self, msg: &ClientMsg);
     fn try_recv(&mut self) -> Option<ServerMsg>;
-    fn update(&mut self);
+    fn update(&mut self, time: f64);
 }
 

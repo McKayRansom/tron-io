@@ -31,7 +31,7 @@ impl WorldServer {
             score_win: SCORE_WIN,
             world_state: WorldState::Waiting,
             players: 0,
-            last_update_time: Self::get_time(),
+            last_update_time: 0.,
             next_update: GridUpdateMsg::default(),
             last_update: GridUpdateMsg::default(),
         }
@@ -59,22 +59,8 @@ impl WorldServer {
         &self.last_update
     }
 
-    #[cfg(not(target_arch = "wasm32"))]
-    fn get_time() -> f64 {
-        use std::time::SystemTime;
 
-        let time = SystemTime::now()
-            .duration_since(SystemTime::UNIX_EPOCH)
-            .unwrap_or_else(|e| panic!("{}", e));
-        time.as_secs_f64()
-    }
-
-    #[cfg(target_arch = "wasm32")]
-    fn get_time() -> f64 {
-        macroquad::time::get_time()
-    }
-
-    pub fn update(&mut self) {
+    pub fn update(&mut self, time: f64) {
         match self.world_state {
             WorldState::Waiting | WorldState::RoundOver(_) | WorldState::GameOver(_) => {
                 if self.players == 0 {
@@ -92,14 +78,14 @@ impl WorldServer {
                     self.world_state = WorldState::Playing;
                 }
                 self.grid = Grid::new();
-                self.grid.rng.srand(Self::get_time() as u64);
-                self.last_update_time = Self::get_time();
+                self.grid.rng.srand(time as u64);
+                self.last_update_time = time;
                 self.next_update = GridUpdateMsg::default();
                 self.last_update = GridUpdateMsg::default();
             }
             WorldState::Playing => {
-                if Self::get_time() - self.last_update_time > (1.0 / 60.0) {
-                    self.last_update_time = Self::get_time();
+                if time - self.last_update_time > (1.0 / 60.0) {
+                    self.last_update_time = time;
                     self.last_update = self.next_update.clone();
                     self.next_update.updates.clear();
                     self.next_update.tick += 1;

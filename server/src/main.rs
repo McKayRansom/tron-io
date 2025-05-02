@@ -69,6 +69,14 @@ impl ClientState {
             }
         }
     }
+    fn get_time() -> f64 {
+        use std::time::SystemTime;
+
+        let time = SystemTime::now()
+            .duration_since(SystemTime::UNIX_EPOCH)
+            .unwrap_or_else(|e| panic!("{}", e));
+        time.as_secs_f64()
+    }
 
     fn on_timer(&self, out: &mut SocketHandle) {
         if let Some(world) = &self.world {
@@ -79,7 +87,8 @@ impl ClientState {
                 }
             }
             // I don't love that any thread can update the world, but it works for now
-            world.update();
+            world.update(Self::get_time());
+
         }
     }
 

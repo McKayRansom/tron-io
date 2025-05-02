@@ -66,7 +66,7 @@ impl WorldClient {
         }
     }
 
-    pub fn update(&mut self) {
+    pub fn update(&mut self, time: f64) {
         while let Some(server_msg) = self.connection.try_recv() {
             log::debug!("Received server message: {:?}", server_msg);
             self.player_id = Some(server_msg.id);
@@ -127,6 +127,6 @@ impl WorldClient {
             }
         }
 
-        self.connection.update();
+        self.connection.update(time);
     }
 }
