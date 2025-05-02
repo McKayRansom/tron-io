@@ -1,0 +1,18 @@
+[package]
+name = "tron-io-client"
+version = "0.1.0"
+edition = "2024"
+default-run = "tron-io-client"
+
+[dependencies]
+tron-io-world = { path = "../world" }
+gamepads = { version = "0.1.6", default-features = false }
+macroquad = { version = "0.4.13", features = ["audio"] }
+nanoserde = "0.1.37"
+# Fix receiving binary data in webassembly
+quad-net = {git = "https://github.com/not-fl3/quad-net.git", rev = "refs/pull/8/head"}
+log = "0.4"
+[target.wasm32-unknown-unknown.dependencies]
+sapp-console-log = "0.1"
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+env_logger = "0.11.8" # any other log-rs frontend will work fine as well
