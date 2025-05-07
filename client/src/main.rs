@@ -1,6 +1,6 @@
 use context::Context;
 use gameplay::Gameplay;
-use macroquad::window::{Conf, next_frame};
+use macroquad::window::{Conf, clear_background, next_frame};
 use scene::{EScene, main_menu::MainMenu};
 
 // mod bike;
@@ -8,14 +8,14 @@ mod gameplay;
 // mod grid;
 mod assets_path;
 mod audio;
+mod colors;
 mod context;
+mod draw;
 mod input;
+mod online;
 mod scene;
 mod text;
 mod ui;
-mod online;
-mod draw;
-mod colors;
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 pub const PKG_NAME: &str = env!("CARGO_PKG_NAME");
@@ -24,7 +24,7 @@ fn window_conf() -> Conf {
     Conf {
         fullscreen: false,
         // high-dpi seems to change the zoom on webassembly??
-        high_dpi: false,
+        high_dpi: true,
         // icon: Some(Icon {
         //     small: include_bytes!("../icons/16x16.rgba").to_owned(),
         //     medium: include_bytes!("../icons/32x32.rgba").to_owned(),
@@ -66,6 +66,13 @@ async fn main() {
 
     loop {
         // clear_background(colors::BLACK);
+
+        clear_background(macroquad::color::Color {
+            r: 0.07,
+            g: 0.07,
+            b: 0.07,
+            a: 1.0,
+        });
         ctx.update();
 
         current_scene.update(&mut ctx);

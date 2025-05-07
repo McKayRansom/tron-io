@@ -1,4 +1,4 @@
-use macroquad::{color::Color, math::{Rect, Vec2}, shapes::{draw_line, draw_rectangle, draw_rectangle_lines}, window::{screen_height, screen_width}};
+use macroquad::{color::{colors, Color}, math::{Rect, Vec2}, shapes::{draw_line, draw_rectangle, draw_rectangle_lines}, window::{clear_background, screen_height, screen_width}};
 use tron_io_world::grid::{Cell, Grid, Point, SQUARES};
 
 pub fn cell_color(cell: &Cell) -> Color {
@@ -56,19 +56,22 @@ impl GridDrawInfo {
 pub fn draw_grid(grid: &Grid) {
     let draw_info = GridDrawInfo::new();
     draw_rectangle(
-        draw_info.offset_x,
-        draw_info.offset_y,
-        draw_info.game_size,
-        draw_info.game_size,
-        macroquad::color::colors::BLACK,
+        draw_info.offset_x - MARGIN,
+        draw_info.offset_y - MARGIN,
+        draw_info.game_size + MARGIN * 2.,
+        draw_info.game_size + MARGIN * 2.,
+        // Color::from_hex(0x020a13),
+        Color { r: 0.03, g: 0.03, b: 0.03, a: 1.0 },
+        // Color { r: 0.30, g: 0.30, b: 0.30, a: 1.0 },
     );
 
-    const GRID_LINE_COLOR: macroquad::color::Color = macroquad::color::colors::DARKGRAY;
-    const GRID_LINE_INTERVAL: i16 = 4;
+    const GRID_LINE_COLOR: macroquad::color::Color = macroquad::color::colors::GRAY;
+    const GRID_LINE_INTERVAL: i16 = 5;
 
     // draw lines every 4 squares
     for i in 0..SQUARES + 1 {
-        if i % GRID_LINE_INTERVAL != 0 {
+        if i != 0 && i != SQUARES {
+        // if i % GRID_LINE_INTERVAL != 0 {
             continue;
         }
         let point_horix = draw_info.grid_to_screen((0, i));

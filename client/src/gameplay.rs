@@ -90,12 +90,19 @@ impl Scene for Gameplay {
             self.client.game_state,
             WorldState::GameOver(_) | WorldState::Waiting | WorldState::RoundOver(_)
         ) {
-            draw_rectangle(0., 0., screen_width(), screen_height(), Color {
-                r: 0.,
-                g: 0.,
-                b: 0.,
-                a: 0.5,
-            });
+            let size: f32 = ctx.screen_size.min_element();
+            draw_rectangle(
+                (ctx.screen_size.x - size) / 2.,
+                (ctx.screen_size.y - size) / 2.,
+                size,
+                size,
+                Color {
+                    r: 0.,
+                    g: 0.,
+                    b: 0.,
+                    a: 0.4,
+                },
+            );
             let (text, subtext) = match self.client.game_state {
                 WorldState::GameOver(_winner) => {
                     ("Game Over!", "Press [enter] to reboot or [delete] to exit.")
