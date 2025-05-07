@@ -1,5 +1,7 @@
-use macroquad::{color::Color, math::Vec2, shapes::{draw_line, draw_rectangle}, window::{screen_height, screen_width}};
-use tron_io_world::grid::{Cell, Grid, Point, SQUARES};
+use macroquad::{color::Color, math::{Rect, Vec2}, shapes::{draw_line, draw_rectangle, draw_rectangle_lines}, window::{screen_height, screen_width}};
+use tron_io_world::{grid::{bike::Bike, Cell, Grid, Point, SQUARES}, ServerPlayer};
+
+use crate::context::Context;
 
 pub fn cell_color(cell: &Cell) -> Color {
     let mut color = crate::colors::get_color(cell.get_color());
@@ -106,4 +108,12 @@ pub fn draw_grid(grid: &Grid) {
             }
         }
     }
+}
+
+pub fn draw_rect(rect: Rect, color: Color) {
+    draw_rectangle(rect.x, rect.y, rect.w, rect.h, color);
+}
+
+pub fn draw_rect_lines(rect: Rect, thickness: f32, color: Color) {
+    draw_rectangle_lines(rect.x, rect.y, rect.w, rect.h, thickness, color);
 }

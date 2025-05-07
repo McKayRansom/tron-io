@@ -59,7 +59,7 @@ impl Lobby {
                 socket.send_bin(&ClientMsg {
                     state: WorldState::Waiting,
                     update: None,
-                    ready: false,
+                    players: Vec::new(),
                 });
                 context.switch_scene_to =
                 Some(crate::scene::EScene::Gameplay(crate::scene::GameOptions {

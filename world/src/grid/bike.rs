@@ -41,7 +41,7 @@ impl BikeUpdate {
 type Ticks = u8;
 
 pub const BOOST_COUNT: u8 = 4;
-pub const BOOST_TIME: Ticks = 10;
+pub const BOOST_TIME: Ticks = 20;
 
 // TODO: Are these off by one?
 const BOOST_SPEED: Ticks = 0;

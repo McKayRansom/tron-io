@@ -123,6 +123,17 @@ pub enum UpdateResult {
     InProgress,
 }
 
+// pub enum GridSize {
+//     Small,
+//     Medium,
+//     Large,
+// }
+
+// pub struct GridSettings {
+    // size: GridSize,
+    // teams
+// }
+
 impl Grid {
     pub fn new() -> Self {
         let mut occupied = Occupied::new();

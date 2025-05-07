@@ -59,7 +59,7 @@ impl<V> Menu<V> {
             pos.y += MENU_SPACING;
         }
 
-        for action in ctx.input.actions.iter() {
+        for (action, _input_type) in ctx.input.actions.iter() {
             match action {
                 Action::Up => {
                     play_sfx(ctx, &ctx.audio.sfx.menu_move);

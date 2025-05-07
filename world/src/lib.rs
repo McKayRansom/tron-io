@@ -7,7 +7,7 @@ pub mod server;
 // pub mod online;
 pub mod local;
 
-const PLAYER_MAX: usize = 4;
+// const PLAYER_MAX: usize = 4;
 const SCORE_WIN: u8 = 3;
 
 #[derive(Default, DeBin, SerBin, Debug, Copy, Clone, PartialEq, Eq)]
@@ -19,16 +19,46 @@ pub enum WorldState {
     GameOver(u8),
 }
 
+pub struct PlayerId(u8);
+
+impl PlayerId {
+    pub fn new(connection: u8, player: u8) -> Self {
+        Self(connection << 4 | player)
+    }
+    pub fn connection(&self) -> u8 {
+        self.0 >> 4
+    }
+}
+
+#[derive(DeBin, SerBin, Debug, Clone)]
+pub struct ClientPlayer {
+    pub name: String,
+    // optimization: bitpack
+    pub ready: bool,
+}
+
+#[derive(DeBin, SerBin, Debug, Clone)]
+pub struct ServerPlayer {
+    pub score: u8,
+    pub name: String,
+    pub ready: bool,
+    pub is_ai: bool,
+}
+
 #[derive(DeBin, SerBin, Debug, Clone)]
 pub struct ServerMsg {
-    pub id: u8,
+    // future optimization: Send hash instead
+    // pub connection_id: u8,
+    pub local_player_ids: Vec<u8>,
+    pub players: Vec<ServerPlayer>,
     pub state: WorldState,
     pub grid_update: Option<GridUpdateMsg>,
 }
 
 #[derive(DeBin, SerBin, Debug, Clone)]
 pub struct ClientMsg {
-    pub ready: bool,
+    // pub connection_id: Option<u8>,
+    pub players: Vec<ClientPlayer>,
     pub state: WorldState,
     pub update: Option<GridUpdateMsg>,
 }
