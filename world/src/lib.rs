@@ -19,22 +19,13 @@ pub enum WorldState {
     GameOver(u8),
 }
 
-pub struct PlayerId(u8);
-
-impl PlayerId {
-    pub fn new(connection: u8, player: u8) -> Self {
-        Self(connection << 4 | player)
-    }
-    pub fn connection(&self) -> u8 {
-        self.0 >> 4
-    }
-}
 
 #[derive(DeBin, SerBin, Debug, Clone)]
 pub struct ClientPlayer {
     pub name: String,
     // optimization: bitpack
     pub ready: bool,
+    // pub team: u8,
 }
 
 #[derive(DeBin, SerBin, Debug, Clone)]
@@ -43,6 +34,7 @@ pub struct ServerPlayer {
     pub name: String,
     pub ready: bool,
     pub is_ai: bool,
+    // pub team: u8,
 }
 
 #[derive(DeBin, SerBin, Debug, Clone)]

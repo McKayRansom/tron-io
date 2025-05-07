@@ -43,6 +43,7 @@ impl WorldServer {
             name: player.name.clone(),
             ready: player.ready,
             is_ai: false,
+            // team: player.team,
         });
         (self.players.len() - 1) as u8
     }
@@ -102,6 +103,7 @@ impl WorldServer {
                             name: "AI".into(),
                             ready: false,
                             is_ai: true,
+                            // team: ,
                         });
                     }
                 }
@@ -133,7 +135,6 @@ impl WorldServer {
                             self.players[winner as usize].score += 1;
                             if self.players[winner as usize].score == self.score_win {
                                 self.world_state = WorldState::GameOver(winner);
-                                // self.game_won = winner == self.player_id.unwrap();
                             } else {
                                 self.world_state = WorldState::RoundOver(winner);
                             }

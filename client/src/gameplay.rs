@@ -50,9 +50,8 @@ impl Scene for Gameplay {
     fn draw(&mut self, ctx: &mut Context) {
         draw_grid(&self.client.grid);
 
-        // draw players
+        // draw players in corners
         for i in 0..4 {
-            // let pos = if
             const PLAYER_EDGE_SPACING: f32 = 24.;
             let pos = match i {
                 0 => vec2(PLAYER_EDGE_SPACING, PLAYER_EDGE_SPACING),

@@ -1,9 +1,4 @@
-use std::fmt::format;
-
-use crate::{
-    ClientPlayer, ServerPlayer,
-    grid::Grid,
-};
+use crate::{ClientPlayer, ServerPlayer, grid::Grid};
 
 use super::{ClientConnection, ClientMsg, GridUpdateMsg, WorldState};
 
@@ -12,10 +7,8 @@ pub struct WorldClient {
     pub grid: Grid,
     pub score_win: u8,
     pub local_players: Vec<ClientPlayer>,
-    // player_update: Option<BikeUpdate>,
 
     // remote
-    // pub connection_id: Option<u8>,
     pub local_player_ids: Vec<u8>, // translation ClientPlayer index -> ServerPlayer index
     pub server_players: Vec<ServerPlayer>,
     pub game_state: WorldState,
@@ -29,10 +22,8 @@ impl WorldClient {
             grid: Grid::new(),
             score_win: super::SCORE_WIN,
             local_players: Vec::new(),
-            // player_update: None,
 
             // Remote
-            // connection_id: None,
             local_player_ids: Vec::new(),
             server_players: Vec::new(),
             game_state: WorldState::Waiting,
@@ -57,17 +48,21 @@ impl WorldClient {
         match self.game_state {
             WorldState::Waiting | WorldState::RoundOver(_) | WorldState::GameOver(_) => {
                 if action == super::Action::Confirm {
-
                     // I was wrong, do not ready up on this
-                    if local_player_id.is_none() && self.game_state == WorldState::Waiting {
-                        let new_player_id = self.local_players.len() as u8;
-                        self.local_players.push(ClientPlayer {
-                            name: format!("p{}", self.local_players.len()),
-                            ready: false,
-                        });
-                        // update server with players
-                        self.send_msg(None);
-                        return Some(new_player_id)
+                    if local_player_id.is_none() {
+                        if self.game_state == WorldState::Waiting {
+                            let new_player_id = self.local_players.len() as u8;
+                            self.local_players.push(ClientPlayer {
+                                name: format!("p{}", self.local_players.len()),
+                                ready: false,
+                            });
+                            // update server with players
+                            self.send_msg(None);
+                            return Some(new_player_id);
+                        } else {
+                            log::warn!("Player cannot join duing {:?}", self.game_state);
+                            return None;
+                        }
                     }
 
                     if let Some(player) = self
@@ -75,7 +70,7 @@ impl WorldClient {
                         .get_mut(local_player_id.unwrap() as usize)
                     {
                         player.ready = true;
-                        // log::info!("Ready!");
+                        log::debug!("Client player {} ready", local_player_id.unwrap());
                         self.send_msg(None);
                     } else {
                         log::warn!("Unknown player: {}", local_player_id.unwrap());
@@ -94,11 +89,12 @@ impl WorldClient {
                 if let Some(bike_update) =
                     self.grid.bikes[*server_player_id as usize].handle_action(action)
                 {
-                    // self.player_update = Some(bike_update.clone());
+                    // TODO: Mark this update for self.grid.tick + 2 and implement rollback!
+                    // (and re-send to transition to UDP)
                     self.send_msg(Some(GridUpdateMsg {
-                        tick: self.grid.tick, 
+                        tick: self.grid.tick,
                         hash: self.grid.hash,
-                        updates: vec![bike_update], // TODO: Mark this update for self.grid.tick + 2 and implement rollback!
+                        updates: vec![bike_update],
                     }));
                 }
             }
@@ -133,12 +129,9 @@ impl WorldClient {
             }
             if self.game_state == WorldState::Playing {
                 if let Some(grid_update) = server_msg.grid_update {
-                    if grid_update.tick != self.grid.tick + 1 {
-                        // unfortuantely, This is expected as the server sends out ticks every 10ms
-                        //  we may not get back before the server sends a duplicate
-                        // log::warn!("Tick {} != {} + 1", grid_update.tick, self.grid.tick);
-                    } else {
-                        // self.player_update = None;
+                    // This is expected to often not be the case as the server sends out ticks every 10ms
+                    //  we may not get back before the server sends a duplicate
+                    if grid_update.tick == self.grid.tick + 1 {
                         let _ = self.grid.apply_updates(&grid_update);
 
                         if self.grid.hash != grid_update.hash {
@@ -148,7 +141,6 @@ impl WorldClient {
                                 grid_update.hash,
                                 grid_update.tick
                             );
-                            // context.switch_scene_to = Some(crate::scene::EScene::MainMenu);
                         }
 
                         self.send_msg(Some(GridUpdateMsg {

@@ -1,7 +1,5 @@
 use macroquad::{color::Color, math::{Rect, Vec2}, shapes::{draw_line, draw_rectangle, draw_rectangle_lines}, window::{screen_height, screen_width}};
-use tron_io_world::{grid::{bike::Bike, Cell, Grid, Point, SQUARES}, ServerPlayer};
-
-use crate::context::Context;
+use tron_io_world::grid::{Cell, Grid, Point, SQUARES};
 
 pub fn cell_color(cell: &Cell) -> Color {
     let mut color = crate::colors::get_color(cell.get_color());

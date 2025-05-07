@@ -1,16 +1,9 @@
 use std::hash::{DefaultHasher, Hash, Hasher};
 
 use bike::{Bike, BikeUpdate};
-// use colors::{DEFAULT_COLOR, get_color};
-// use macroquad::{
-//     math::Vec2,
-//     shapes::{draw_line, draw_rectangle},
-//     window::{screen_height, screen_width},
-// };
 use nanoserde::{DeBin, SerBin};
 
 pub mod bike;
-// pub mod colors;
 
 pub const SQUARES: i16 = 80;
 
