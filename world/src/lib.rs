@@ -15,7 +15,7 @@ pub enum WorldState {
     #[default]
     Waiting,
     Playing,
-    RoundOver(u8),
+    RoundOver(Option<u8>),
     GameOver(u8),
 }
 

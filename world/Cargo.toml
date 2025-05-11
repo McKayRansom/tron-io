@@ -10,6 +10,7 @@ nanoserde = "0.1.37"
 # quad-net = {git = "https://github.com/not-fl3/quad-net.git", rev = "refs/pull/8/head"}
 log = "0.4"
 quad-rand = "0.2.3"
+pathfinding = "4.14.0"
 [target.wasm32-unknown-unknown.dependencies]
 sapp-console-log = "0.1"
 macroquad = { version = "0.4.13", features = ["audio"] } # this is only for get_time()...

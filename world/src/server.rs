@@ -70,7 +70,7 @@ impl WorldServer {
             server_player.ready = client_player.ready;
             log::info!("Player {} ready", player_id);
             changes_made = true;
-        } 
+        }
         changes_made
     }
 
@@ -97,7 +97,8 @@ impl WorldServer {
                 } else {
                     self.world_state = WorldState::Playing;
                     // TEMP: create AI players
-                    if self.players.len() < MIN_PLAYERS {
+                    while self.players.len() < MIN_PLAYERS {
+                        log::info!("Adding AI player");
                         self.players.push(ServerPlayer {
                             score: 0,
                             name: "AI".into(),
@@ -123,7 +124,7 @@ impl WorldServer {
                     for i in 0..self.players.len() {
                         if self.players[i].is_ai {
                             if let Some(update) =
-                                self.grid.bikes[i].ai_update(&self.grid.occupied, &self.grid.rng)
+                                self.grid.bikes[i].ai_update(&self.grid)
                             {
                                 self.last_update.updates.push(update);
                             }
@@ -132,11 +133,15 @@ impl WorldServer {
 
                     match self.grid.apply_updates(&self.last_update) {
                         UpdateResult::GameOver(winner) => {
-                            self.players[winner as usize].score += 1;
-                            if self.players[winner as usize].score == self.score_win {
-                                self.world_state = WorldState::GameOver(winner);
+                            if let Some(winner) = winner {
+                                self.players[winner as usize].score += 1;
+                                if self.players[winner as usize].score == self.score_win {
+                                    self.world_state = WorldState::GameOver(winner);
+                                } else {
+                                    self.world_state = WorldState::RoundOver(Some(winner));
+                                }
                             } else {
-                                self.world_state = WorldState::RoundOver(winner);
+                                self.world_state = WorldState::RoundOver(None);
                             }
                             for player in self.players.iter_mut() {
                                 player.ready = false;

@@ -114,7 +114,7 @@ pub fn draw_grid(grid: &Grid) {
                     point.y,
                     draw_info.sq_size,
                     draw_info.sq_size,
-                    cell_color(&grid.occupied.get_cell((x, y))),
+                    cell_color(grid.occupied.get_cell((x, y)).unwrap()),
                 );
             }
         }

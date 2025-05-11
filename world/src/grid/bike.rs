@@ -40,7 +40,7 @@ impl BikeUpdate {
 
 type Ticks = u8;
 
-pub const BOOST_COUNT: u8 = 4;
+pub const BOOST_COUNT: u8 = 3;
 pub const BOOST_TIME: Ticks = 20;
 
 // TODO: Are these off by one?
@@ -110,7 +110,7 @@ impl Bike {
 
     pub fn apply_update(&mut self, update: &BikeUpdate) {
         self.dir = update.dir;
-        if update.boost && self.boost_count > 0 {
+        if update.boost && self.boost_count > 0 && self.boost_time == 0 {
             self.boost_time = BOOST_TIME;
             self.boost_count -= 1;
         }

@@ -72,11 +72,10 @@ impl Occupied {
         self.occupied[pos.1 as usize][pos.0 as usize].is_occupied()
     }
 
-    pub fn get_cell(&self, pos: Point) -> Cell {
-        if pos.0 < 0 || pos.1 < 0 || pos.0 >= SQUARES || pos.1 >= SQUARES {
-            return Cell::new();
-        }
-        self.occupied[pos.1 as usize][pos.0 as usize].clone()
+    pub fn get_cell(&self, pos: Point) -> Option<&Cell> {
+        self.occupied
+            .get(pos.1 as usize)?
+            .get(pos.0 as usize)
     }
 
     pub fn occupy(&mut self, pos: Point, id: u8, boost: bool) -> bool {
@@ -112,7 +111,7 @@ pub struct Grid {
 }
 
 pub enum UpdateResult {
-    GameOver(u8),
+    GameOver(Option<u8>),
     InProgress,
 }
 
@@ -123,8 +122,8 @@ pub enum UpdateResult {
 // }
 
 // pub struct GridSettings {
-    // size: GridSize,
-    // teams
+// size: GridSize,
+// teams
 // }
 
 impl Grid {
@@ -159,8 +158,8 @@ impl Grid {
             bike.hash(&mut hasher);
         }
         self.hash = hasher.finish();
-        if alive_players == 1 {
-            UpdateResult::GameOver(winning_player.unwrap())
+        if alive_players <= 1 {
+            UpdateResult::GameOver(winning_player)
         } else {
             UpdateResult::InProgress
         }
