@@ -6,6 +6,13 @@ use super::*;
 pub const DIRS: &[Point] = &[UP, DOWN, LEFT, RIGHT];
 pub const DIRS_REV: &[Point] = &[RIGHT, LEFT, DOWN, UP];
 
+/*
+ * AI Ideas:
+ * Mode survive: Current algo
+ * Mode cutoff:
+ * - Flood fill from our position and players position and mark how many moves ahead they will get there
+ * - If the player's number is lower, they will get there first, otherwise the AI will get there first
+ */
 impl Bike {
     pub fn ai_update(
         &self,
@@ -13,6 +20,8 @@ impl Bike {
         rng: &quad_rand::RandGenerator,
     ) -> Option<BikeUpdate> {
         let new_head = (self.head.0 + self.dir.0, self.head.1 + self.dir.1);
+
+        // let path_grid: Vec<Vec<f32>> = Vec::ne(&self, other);
 
         if grid.is_occupied(new_head) {
             let dirs = if rng.gen_range(0, 2) == 0 {

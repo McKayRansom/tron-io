@@ -133,8 +133,8 @@ impl Grid {
         let bikes = vec![
             Bike::new(&mut occupied, 0, 6, (8, SQUARES / 2), bike::RIGHT),
             Bike::new(&mut occupied, 1, 10, (SQUARES - 9, SQUARES / 2), bike::LEFT),
-            // Bike::new(&mut occupied, 3, (SQUARES / 2, 11), bike::DOWN),
-            // Bike::new(&mut occupied, 4, (SQUARES / 2, SQUARES - 11), bike::UP),
+            // Bike::new(&mut occupied, 2, 0, (SQUARES / 2 + 1, 11), bike::DOWN),
+            // Bike::new(&mut occupied, 3, 4, (SQUARES / 2 - 1, SQUARES - 11), bike::UP),
         ];
         Self {
             hash: 0,
