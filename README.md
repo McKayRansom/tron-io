@@ -8,6 +8,7 @@ Basic tron light cycle game (non-copyrighted name pending) to learn Rust gamedev
 - [x] Main Menu
 - [x] Touch support
 - [x] Multiplayer support
+- [ ] Redo sockets or SSL multiplayer support :()
 - [ ] Setup public server
 - [x] WASM build
 - [ ] Non-copyrighted name
@@ -20,6 +21,12 @@ Basic tron light cycle game (non-copyrighted name pending) to learn Rust gamedev
 - [ ] Computer sounding names?
 - [ ] Server browser
 - [ ] Teams
-- [ ] Steam armegetron: Explosions, teams, etc..
+- [ ] Steal armegetron: Explosions, teams, etc..
 - [ ] Sprite or diff thing for head
 - [ ] Head interpolation
+- [ ] Virtual Gamepad drag instead of click
+- [ ] Spritesheet with: Simple bike sprite, gamepad arrows/buttons
+- [ ] Animations: Death explosion and slow fade to black, countdown to start, etc
+- [ ] Sounds/music obvy
+- [ ] Keep playing the game for a few frames after all but one is dead
+- [ ] More AI enehancements

@@ -11,6 +11,11 @@ pub const DIRS_REV: &[Point] = &[RIGHT, LEFT, DOWN, UP];
  * Mode survive: Turn when we reach wall
  * 
  * This is much better, but needs tweaking to not suicide so much...
+ * 
+ * Ideas:
+ * - Instead of pathing to position, path to predicted pos (this is harder to calc than I thought)
+ * - Randomize X vs Y in successsors to shake things up
+ * - random seed to shake things up
  */
 impl Bike {
     pub fn ai_update(&self, grid: &Grid) -> Option<BikeUpdate> {
