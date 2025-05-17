@@ -1,7 +1,7 @@
 use macroquad::{color::colors, math::Vec2};
 use tron_io_world::Action;
 
-use crate::{audio::play_sfx, context::Context, text};
+use crate::{audio::SoundFx, context::Context, text};
 
 pub struct MenuItem<V> {
     pub text: String,
@@ -62,15 +62,15 @@ impl<V> Menu<V> {
         for (action, _input_type) in ctx.input.actions.iter() {
             match action {
                 Action::Up => {
-                    play_sfx(ctx, &ctx.audio.sfx.menu_move);
+                    ctx.audio.play_sfx(SoundFx::MenuMove);
                     self.select_previous();
                 }
                 Action::Down => {
-                    play_sfx(ctx, &ctx.audio.sfx.menu_move);
+                    ctx.audio.play_sfx(SoundFx::MenuMove);
                     self.select_next();
                 }
                 Action::Confirm => {
-                    play_sfx(ctx, &ctx.audio.sfx.menu_select);
+                    ctx.audio.play_sfx(SoundFx::MenuSelect);
                     return Some(&self.items[self.selected].value);
                 }
                 _ => {}

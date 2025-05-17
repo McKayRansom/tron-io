@@ -78,10 +78,14 @@ impl Bike {
 
         if let Some(path) = path {
             if let Some(pos) = path.get(1) {
+                let dir = (-self.head.0 + pos.0, -self.head.1 + pos.1);
+                if dir == self.dir {
+                    return None;
+                }
                 // log::info!("Path from {:?} to {:?}", self.head, pos);
                 return Some(BikeUpdate {
                     id: self.id,
-                    dir: (-self.head.0 + pos.0, -self.head.1 + pos.1),
+                    dir,
                     boost: false,
                     // TODO: This needs tweaking to not die constantly
                     // boost: self.boost_time == 0 && path.len() < 10, // && grid.rng.rand() < u32::MAX / 10,

@@ -1,12 +1,24 @@
-use crate::{ClientPlayer, ServerPlayer, grid::Grid};
+use crate::{
+    ClientPlayer, ServerPlayer,
+    grid::{Grid, bike::BikeUpdate},
+};
 
 use super::{ClientConnection, ClientMsg, GridUpdateMsg, WorldState};
+
+pub enum WorldEvent {
+    PlayerJoin,
+    PlayerReady,
+    LocalUpdate(BikeUpdate),
+    ServerUpdate(GridUpdateMsg),
+    GameState(WorldState),
+}
 
 pub struct WorldClient {
     // local
     pub grid: Grid,
     pub score_win: u8,
     pub local_players: Vec<ClientPlayer>,
+    pub events: Vec<WorldEvent>, // for sfx and such
 
     // remote
     pub local_player_ids: Vec<u8>, // translation ClientPlayer index -> ServerPlayer index
@@ -22,6 +34,7 @@ impl WorldClient {
             grid: Grid::new(),
             score_win: super::SCORE_WIN,
             local_players: Vec::new(),
+            events: Vec::new(),
 
             // Remote
             local_player_ids: Vec::new(),
@@ -38,6 +51,17 @@ impl WorldClient {
             state: self.game_state,
             update,
         });
+    }
+
+    pub fn server_player(&self, local_player: u8) -> Option<u8> {
+        self.local_player_ids.get(local_player as usize).copied()
+    }
+
+    pub fn local_player(&self, server_player: u8) -> Option<u8> {
+        self.local_player_ids
+            .iter()
+            .position(|id| id == &server_player)
+            .map(|index| index as u8)
     }
 
     pub fn handle_input(
@@ -89,6 +113,7 @@ impl WorldClient {
                 if let Some(bike_update) =
                     self.grid.bikes[*server_player_id as usize].handle_action(action)
                 {
+                    self.events.push(WorldEvent::LocalUpdate(bike_update));
                     // TODO: Mark this update for self.grid.tick + 2 and implement rollback!
                     // (and re-send to transition to UDP)
                     self.send_msg(Some(GridUpdateMsg {
@@ -124,6 +149,7 @@ impl WorldClient {
                     }
                     _ => {}
                 }
+                self.events.push(WorldEvent::GameState(self.game_state));
                 log::info!("Game state changed to {:?}", self.game_state);
                 self.send_msg(None);
             }
@@ -142,6 +168,7 @@ impl WorldClient {
                                 grid_update.tick
                             );
                         }
+                        self.events.push(WorldEvent::ServerUpdate(grid_update));
 
                         self.send_msg(Some(GridUpdateMsg {
                             tick: self.grid.tick,

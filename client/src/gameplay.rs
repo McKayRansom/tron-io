@@ -3,14 +3,14 @@ use std::collections::HashMap;
 use macroquad::color::colors;
 use macroquad::prelude::*;
 use tron_io_world::WorldState;
-use tron_io_world::client::WorldClient;
+use tron_io_world::client::{WorldClient, WorldEvent};
 
-use crate::colors::get_color;
 use crate::context::Context;
 use crate::draw::{draw_grid, draw_rect, draw_rect_lines};
 use crate::input::InputType;
 use crate::scene::{GameOptions, Scene};
 use crate::text::{draw_text, draw_text_screen_centered, measure_text, text_size};
+use crate::{audio::SoundFx, colors::get_color};
 use crate::{input, text};
 
 pub struct Gameplay {
@@ -28,23 +28,75 @@ impl Gameplay {
 }
 
 impl Scene for Gameplay {
-    fn update(&mut self, context: &mut Context) {
-        for (action, input_type) in context.input.actions.iter() {
+    fn update(&mut self, ctx: &mut Context) {
+        for (action, input_type) in ctx.input.actions.iter() {
             // Edgde case: handle somewhere else?
             if *action == input::Action::Cancel
                 && matches!(self.client.game_state, WorldState::GameOver(_))
             {
-                context.switch_scene_to = Some(crate::scene::EScene::MainMenu);
+                ctx.switch_scene_to = Some(crate::scene::EScene::MainMenu);
+                ctx.audio.play_sfx(SoundFx::MenuCancel);
             }
 
             let player_id = self.input_map.get(input_type);
             if let Some(new_player_id) = self.client.handle_input(player_id.copied(), *action) {
                 if player_id.is_none() {
                     self.input_map.insert(*input_type, new_player_id);
+                    ctx.audio.play_sfx(SoundFx::MenuSelect);
                 }
             }
         }
         self.client.update(get_time());
+        while let Some(event) = self.client.events.pop() {
+            match event {
+                WorldEvent::PlayerJoin => ctx.audio.play_sfx(SoundFx::MenuSelect),
+                WorldEvent::PlayerReady => ctx.audio.play_sfx(SoundFx::MenuSelect),
+                WorldEvent::LocalUpdate(bike_update) => {
+                    if bike_update.boost {
+                        ctx.audio.play_sfx(SoundFx::Boost);
+                    } else {
+                        // turn SFX
+                        ctx.audio.play_sfx(SoundFx::Turn);
+                    }
+                }
+                WorldEvent::GameState(world_state) => match world_state {
+                    WorldState::Waiting => {}
+                    WorldState::Playing => {
+                        // start match noise or countdown?
+                        ctx.audio.play_sfx(SoundFx::RoundStart);
+                    }
+                    WorldState::RoundOver(winner) => {
+                        if let Some(winner) = winner {
+                            if let Some(_player) = self.client.local_player(winner) {
+                                ctx.audio.play_sfx(SoundFx::RoundWin);
+                            } else {
+                                ctx.audio.play_sfx(SoundFx::RoundLose);
+                            }
+                        }
+                    }
+                    WorldState::GameOver(winner) => {
+                        if let Some(_player) = self.client.local_player(winner) {
+                            ctx.audio.play_sfx(SoundFx::GameWin);
+                        } else {
+                            ctx.audio.play_sfx(SoundFx::GameLose);
+                        }
+                    }
+                },
+                WorldEvent::ServerUpdate(grid_update_msg) => {
+                    for update in &grid_update_msg.updates {
+                        // only do these for remote players, local players are played immedialty
+                        if self.client.local_player(update.id).is_none() {
+                            if update.boost {
+                                ctx.audio.play_sfx_vol(SoundFx::Boost, 0.75);
+                            } else {
+                                // turn SFX
+                                ctx.audio.play_sfx_vol(SoundFx::Turn, 0.75);
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
     fn draw(&mut self, ctx: &mut Context) {
@@ -63,10 +115,17 @@ impl Scene for Gameplay {
                 ),
                 _ => unreachable!(),
             };
-            let text: String = if let Some(player) = self.client.local_players.get(i) {
-                format!("{} ready: {} boost: XXX", player.name, player.ready)
+            let (text, color) = if let Some(player) = self.client.local_players.get(i) {
+                (
+                    format!("{} ready: {} boost: XXX", player.name, player.ready),
+                    get_color(
+                        self.client.grid.bikes
+                            [self.client.server_player(i as u8).unwrap_or(0) as usize]
+                            .get_color(),
+                    ),
+                )
             } else if self.client.game_state == WorldState::Waiting {
-                "[ENTER/LSHIFT/A] to join".into()
+                ("[ENTER/LSHIFT/A] to join".into(), colors::WHITE)
             } else {
                 continue;
             };
@@ -81,7 +140,7 @@ impl Scene for Gameplay {
                 },
                 pos.y,
                 text::Size::Small,
-                colors::WHITE,
+                color,
             );
         }
 
@@ -103,20 +162,46 @@ impl Scene for Gameplay {
                     a: 0.4,
                 },
             );
-            let (text, subtext) = match self.client.game_state {
-                WorldState::GameOver(_winner) => {
-                    ("Game Over!", "Press [enter] to reboot or [delete] to exit.")
-                }
-                WorldState::Waiting => ("Waiting for players...", "Press [enter] to start."),
-                WorldState::RoundOver(_winner) => ("Round Over", "Press [enter] when ready."),
+            let mut color = colors::WHITE;
+            let (text, subtext): (String, String) = match self.client.game_state {
+                WorldState::GameOver(winner) => (
+                    if let Some(local_player) = self.client.local_player(winner) {
+                        color = get_color(self.client.grid.get_color(winner));
+                        format!("Player P{} won!", local_player)
+                    } else {
+                        "Game Lost!".into()
+                    },
+                    "Press [enter] to reboot or [delete] to exit.".into(),
+                ),
+                WorldState::Waiting => (
+                    "Waiting for players...".into(),
+                    "Press [enter] to start.".into(),
+                ),
+                WorldState::RoundOver(winner) => (
+                    if winner.is_none() {
+                        "Round tied".into()
+                    } else if let Some(local_player) = self.client.local_player(winner.unwrap()) {
+                        color = get_color(self.client.grid.get_color(winner.unwrap()));
+                        format!("Round won by P{}", local_player)
+                    } else {
+                        "Round Lost...".into()
+                    },
+                    "Press [enter] when ready.".into(),
+                ),
                 _ => unreachable!(),
             };
 
             let mut pos: Vec2 = vec2(ctx.screen_size.x / 2., 200.);
 
-            draw_text_screen_centered(&ctx, text, pos.y, text::Size::Medium, colors::WHITE);
+            draw_text_screen_centered(&ctx, text.as_str(), pos.y, text::Size::Medium, color);
             pos.y += 100.;
-            draw_text_screen_centered(&ctx, subtext, pos.y, text::Size::Small, colors::WHITE);
+            draw_text_screen_centered(
+                &ctx,
+                subtext.as_str(),
+                pos.y,
+                text::Size::Small,
+                colors::WHITE,
+            );
             pos.y += 100.;
 
             for (i, player) in self.client.server_players.iter().enumerate() {

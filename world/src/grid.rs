@@ -144,6 +144,10 @@ impl Grid {
         }
     }
 
+    pub fn get_color(&self, bike_id: u8) -> u8 {
+        self.bikes[bike_id as usize].get_color()
+    }
+
     pub fn update(&mut self) -> UpdateResult {
         let mut winning_player: Option<u8> = None;
         let mut alive_players = 0;

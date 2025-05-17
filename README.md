@@ -17,7 +17,7 @@ Basic tron light cycle game (non-copyrighted name pending) to learn Rust gamedev
 ## Wishlist
 - [ ] Brakes or jump?
 - [ ] Add real lobby
-- [ ] Local multiplayer with controls
+- [x] Local multiplayer with controls
 - [ ] Computer sounding names?
 - [ ] Server browser
 - [ ] Teams
@@ -30,3 +30,4 @@ Basic tron light cycle game (non-copyrighted name pending) to learn Rust gamedev
 - [ ] Sounds/music obvy
 - [ ] Keep playing the game for a few frames after all but one is dead
 - [ ] More AI enehancements
+- [ ] More interseting main menu, Large AI battle?
