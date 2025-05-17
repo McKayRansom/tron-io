@@ -29,7 +29,7 @@ impl<V> MenuItem<V> {
     }
 }
 
-const MENU_SPACING: f32 = 40.;
+pub const MENU_SPACING: f32 = 40.;
 
 pub struct Menu<V> {
     pub items: Vec<MenuItem<V>>,

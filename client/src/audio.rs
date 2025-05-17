@@ -14,6 +14,7 @@ pub enum SoundFx {
     GameLose,
     Turn,
     Boost,
+    TitleMusic,
 }
 pub struct AudioAtlas {
     pub sfx: Vec<(SoundFx, Sound)>,
@@ -54,6 +55,7 @@ impl AudioAtlas {
                 ),
                 (SoundFx::GameWin, load_sfx(base, "sfx/gameWin.wav").await),
                 (SoundFx::GameLose, load_sfx(base, "sfx/gameLose.wav").await),
+                (SoundFx::TitleMusic, load_sfx(base, "sfx/jamuary-2023-01.wav").await),
                 // (SoundFx::MenuCancel, load_sfx(base, "sfx/menuCancel.wav").await),
                 // (SoundFx::MenuCancel, load_sfx(base, "sfx/menuCancel.wav").await),
             ],
@@ -61,28 +63,16 @@ impl AudioAtlas {
     }
 
     pub fn play_sfx(&self, effect: SoundFx) {
-        // if ctx.settings.is_muted() {
-        //     return;
-        // }
-        for sfx in &self.sfx {
-            if sfx.0 == effect {
-                macroquad::audio::play_sound_once(&sfx.1);
-                return;
-            }
-        }
-        panic!("No Sound file for SFX: {:?}", effect);
+        self.play_sfx_ex(effect, PlaySoundParams::default());
     }
 
-    pub fn play_sfx_vol(&self, effect: SoundFx, vol: f32) {
+    pub fn play_sfx_ex(&self, effect: SoundFx, params: PlaySoundParams) {
         // if ctx.settings.is_muted() {
         //     return;
         // }
         for sfx in &self.sfx {
             if sfx.0 == effect {
-                macroquad::audio::play_sound(&sfx.1, PlaySoundParams {
-                    looped: false,
-                    volume: vol,
-                });
+                macroquad::audio::play_sound(&sfx.1, params);
                 return;
             }
         }

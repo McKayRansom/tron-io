@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use macroquad::audio::PlaySoundParams;
 use macroquad::color::colors;
 use macroquad::prelude::*;
 use tron_io_world::WorldState;
@@ -87,10 +88,16 @@ impl Scene for Gameplay {
                         // only do these for remote players, local players are played immedialty
                         if self.client.local_player(update.id).is_none() {
                             if update.boost {
-                                ctx.audio.play_sfx_vol(SoundFx::Boost, 0.75);
+                                ctx.audio.play_sfx_ex(SoundFx::Boost, PlaySoundParams {
+                                    looped: false,
+                                    volume: 0.75,
+                                });
                             } else {
                                 // turn SFX
-                                ctx.audio.play_sfx_vol(SoundFx::Turn, 0.75);
+                                ctx.audio.play_sfx_ex(SoundFx::Turn, PlaySoundParams {
+                                    looped: false,
+                                    volume: 0.75,
+                                });
                             }
                         }
                     }

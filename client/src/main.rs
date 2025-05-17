@@ -1,6 +1,6 @@
 use context::Context;
 use gameplay::Gameplay;
-use macroquad::window::{Conf, clear_background, next_frame};
+use macroquad::{audio::PlaySoundParams, window::{clear_background, next_frame, Conf}};
 use scene::{EScene, main_menu::MainMenu};
 
 // mod bike;
@@ -60,6 +60,12 @@ async fn main() {
     log::info!("Starting {} v{}", PKG_NAME, VERSION);
 
     let mut ctx = Context::default().await;
+
+    ctx.audio
+        .play_sfx_ex(crate::audio::SoundFx::TitleMusic, PlaySoundParams {
+            looped: true,
+            volume: 1.0,
+        });
 
     let mut current_scene: Box<dyn scene::Scene> =
         Box::new(scene::main_menu::MainMenu::new(&mut ctx).await);

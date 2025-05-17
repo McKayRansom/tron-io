@@ -1,21 +1,22 @@
-// use super::credits::Credits;
 // use super::settings::Settings;
 use super::{EScene, Scene};
 // use crate::consts::*;
 use crate::context::Context;
 use crate::text::{self, draw_text};
 use crate::ui::menu::{Menu, MenuItem};
+use credits::Credits;
 use macroquad::color::colors;
 use macroquad::math::vec2;
 use tron_io_world::client::WorldClient;
 use tron_io_world::local::WorldClientLocal;
 
+mod credits;
 mod lobby;
 
 pub struct MainMenu {
     menu: Menu<MenuOption>,
     // settings_subscene: Settings,
-    // credits_subscene: Credits,
+    credits_subscene: Credits,
     lobby: Option<lobby::Lobby>,
 }
 
@@ -23,7 +24,7 @@ enum MenuOption {
     Local,
     Online,
     // Settings,
-    // Credits,
+    Credits,
     #[cfg(not(target_family = "wasm"))]
     Quit,
 }
@@ -33,15 +34,18 @@ const TITLE_Y_INSET: f32 = 100.;
 const MENU_CONTENT_Y: f32 = 400.;
 
 impl MainMenu {
-    pub async fn new(_ctx: &mut Context) -> Self {
+    pub async fn new(ctx: &mut Context) -> Self {
+
         Self {
             menu: Menu::new(vec![
                 MenuItem::new("Local".into(), MenuOption::Local),
                 MenuItem::new("Online".into(), MenuOption::Online),
                 // MenuItem::new("Settings".into(), MenuOption::Settings),
+                MenuItem::new("Credits".into(), MenuOption::Credits),
                 #[cfg(not(target_family = "wasm"))]
                 MenuItem::new("Quit".into(), MenuOption::Quit),
             ]),
+            credits_subscene: Credits::new(ctx),
             lobby: None,
         }
     }
@@ -54,10 +58,10 @@ impl Scene for MainMenu {
         //     return;
         // }
 
-        // if self.credits_subscene.active {
-        //     self.credits_subscene.update(ctx);
-        //     return;
-        // }
+        if self.credits_subscene.active {
+            self.credits_subscene.update(ctx);
+            return;
+        }
         if let Some(lobby) = &mut self.lobby {
             lobby.update(ctx);
             return;
@@ -70,10 +74,10 @@ impl Scene for MainMenu {
         //     return;
         // }
 
-        // if self.credits_subscene.active {
-        //     self.credits_subscene.draw(ctx);
-        //     return;
-        // }
+        if self.credits_subscene.active {
+            self.credits_subscene.draw(ctx);
+            return;
+        }
 
         draw_text(
             ctx,
@@ -109,9 +113,9 @@ impl Scene for MainMenu {
                 // MenuOption::Settings => {
                 //     self.settings_subscene.active = true;
                 // }
-                // MenuOption::Credits => {
-                //     self.credits_subscene.active = true;
-                // }
+                MenuOption::Credits => {
+                    self.credits_subscene.active = true;
+                }
                 #[cfg(not(target_family = "wasm"))]
                 MenuOption::Quit => {
                     ctx.request_quit = true;
