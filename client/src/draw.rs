@@ -1,8 +1,5 @@
 use macroquad::{
-    color::Color,
-    math::{Rect, Vec2},
-    shapes::{draw_line, draw_rectangle, draw_rectangle_lines},
-    window::{screen_height, screen_width},
+    color::Color, math::{Rect, Vec2}, prelude::{collections::storage, gl_use_default_material, gl_use_material, Material}, shapes::{draw_line, draw_rectangle, draw_rectangle_lines}, window::{screen_height, screen_width}
 };
 use tron_io_world::grid::{Cell, Grid, Point, SQUARES};
 
@@ -59,6 +56,10 @@ impl GridDrawInfo {
 }
 
 pub fn draw_grid(grid: &Grid) {
+    // draw with CRT?
+    // TODO: Draw entire thing at once to camera buf!
+    // gl_use_material(&storage::get::<Material>());
+
     let draw_info = GridDrawInfo::new();
     draw_rectangle(
         draw_info.offset_x - MARGIN,
@@ -76,6 +77,7 @@ pub fn draw_grid(grid: &Grid) {
     );
 
     const GRID_LINE_COLOR: macroquad::color::Color = macroquad::color::colors::GRAY;
+    const GRID_LINE_THICKNESS: f32 = 2.;
     // const GRID_LINE_INTERVAL: i16 = 5;
 
     // draw lines every 4 squares
@@ -90,7 +92,7 @@ pub fn draw_grid(grid: &Grid) {
             point_horix.y,
             point_horix.x + draw_info.game_size,
             point_horix.y,
-            2.,
+            GRID_LINE_THICKNESS,
             GRID_LINE_COLOR,
         );
         let point_vert = draw_info.grid_to_screen((i, 0));
@@ -99,7 +101,7 @@ pub fn draw_grid(grid: &Grid) {
             point_vert.y,
             point_vert.x,
             point_vert.y + draw_info.game_size,
-            2.,
+            GRID_LINE_THICKNESS,
             GRID_LINE_COLOR,
         );
     }
@@ -119,6 +121,7 @@ pub fn draw_grid(grid: &Grid) {
             }
         }
     }
+    gl_use_default_material();
 }
 
 pub fn draw_rect(rect: Rect, color: Color) {
