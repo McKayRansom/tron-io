@@ -25,20 +25,6 @@ impl Context {
         let font = load_ttf_font(base_assets_path.join("editundo.ttf").to_str().unwrap())
             .await
             .unwrap();
-        draw_text_ex(
-            "Loading...",
-            200.,
-            screen_height() / 2.,
-            TextParams {
-                font: Some(&font),
-                font_size: 32,
-                ..Default::default()
-            },
-        );
-        // unsafe {glFlush();}
-        // TODO: This doesn't work, because apparently macroquad clears the frame even if we don't finish drawing before then...
-        // So it get's cleared immediatly after...
-        next_frame().await;
         Self {
             font: font,
             screen_size: Vec2::new(0.0, 0.0),
