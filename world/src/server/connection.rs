@@ -27,6 +27,7 @@ impl ServerConnectionState {
                 let id = world.join(&msg.players[i]);
                 self.player_mappings.push(id);
                 log::info!("Player {} joined", id);
+                send_response = true;
             }
         }
 

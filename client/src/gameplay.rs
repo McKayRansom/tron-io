@@ -124,7 +124,20 @@ impl Scene for Gameplay {
             };
             let (text, color) = if let Some(player) = self.client.local_players.get(i) {
                 (
-                    format!("{} ready: {} boost: XXX", player.name, player.ready),
+                    match self.client.game_state {
+                        WorldState::Playing => format!(
+                            "{} boost: {} ",
+                            player.name,
+                            "O".repeat(
+                                self.client.grid.bikes
+                                    [self.client.server_player(i as u8).unwrap() as usize]
+                                    .boost_count as usize
+                            )
+                        ),
+                        _ => format!("P{} ready: {} ", player.name, player.ready),
+                        // WorldState::RoundOver(_) => todo!(),
+                        // WorldState::GameOver(_) => todo!(),
+                    },
                     get_color(
                         self.client.grid.bikes
                             [self.client.server_player(i as u8).unwrap_or(0) as usize]

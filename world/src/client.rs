@@ -135,6 +135,9 @@ impl WorldClient {
             self.local_player_ids = server_msg.local_player_ids.clone();
             if self.game_state != server_msg.state {
                 self.game_state = server_msg.state;
+                for player in self.local_players.iter_mut() {
+                    player.ready = false;
+                }
                 match self.game_state {
                     WorldState::Waiting => {
                         // New game
@@ -142,9 +145,6 @@ impl WorldClient {
                     }
                     WorldState::Playing => {
                         // New round (potentially)
-                        for player in self.local_players.iter_mut() {
-                            player.ready = false;
-                        }
                         self.grid = Grid::new();
                     }
                     _ => {}

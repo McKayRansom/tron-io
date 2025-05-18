@@ -89,6 +89,9 @@ impl WorldServer {
                 {
                     return;
                 }
+                for player in self.players.iter_mut() {
+                    player.ready = false;
+                }
                 if matches!(self.world_state, WorldState::GameOver(_)) {
                     for player in self.players.iter_mut() {
                         player.score = 0;
@@ -123,16 +126,14 @@ impl WorldServer {
 
                     for i in 0..self.players.len() {
                         if self.players[i].is_ai {
-                            if let Some(update) =
-                                self.grid.bikes[i].ai_update(&self.grid)
-                            {
+                            if let Some(update) = self.grid.bikes[i].ai_update(&self.grid) {
                                 self.last_update.updates.push(update);
                             }
                         }
                     }
 
                     match self.grid.apply_updates(&self.last_update) {
-                        UpdateResult::GameOver(winner) => {
+                        UpdateResult::MatchOver(winner) => {
                             if let Some(winner) = winner {
                                 self.players[winner as usize].score += 1;
                                 if self.players[winner as usize].score == self.score_win {
@@ -142,9 +143,6 @@ impl WorldServer {
                                 }
                             } else {
                                 self.world_state = WorldState::RoundOver(None);
-                            }
-                            for player in self.players.iter_mut() {
-                                player.ready = false;
                             }
                         }
                         UpdateResult::InProgress => {}

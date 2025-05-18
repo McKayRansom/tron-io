@@ -125,7 +125,7 @@ impl Scene for MainMenu {
 
         draw_text(
             ctx,
-            "Change Select = Arrow Keys | Confirm = Z",
+            "Change Select = [arrow keys] or [WASD] | Confirm = [Enter] or [LSHIFT]",
             X_INSET,
             ctx.screen_size.y - 40.,
             text::Size::Small,

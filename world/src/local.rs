@@ -23,7 +23,9 @@ impl WorldClientLocal {
 
 impl ClientConnection for WorldClientLocal {
     fn send(&mut self, msg: &ClientMsg) {
-        self.connection.on_msg(msg, &mut self.world);
+        if let Some(msg) = self.connection.on_msg(msg, &mut self.world) {
+            self.response.push_back(msg);
+        }
     }
 
     fn try_recv(&mut self) -> Option<ServerMsg> {

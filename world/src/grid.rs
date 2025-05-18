@@ -111,7 +111,7 @@ pub struct Grid {
 }
 
 pub enum UpdateResult {
-    GameOver(Option<u8>),
+    MatchOver(Option<u8>),
     InProgress,
 }
 
@@ -163,7 +163,7 @@ impl Grid {
         }
         self.hash = hasher.finish();
         if alive_players <= 1 {
-            UpdateResult::GameOver(winning_player)
+            UpdateResult::MatchOver(winning_player)
         } else {
             UpdateResult::InProgress
         }
