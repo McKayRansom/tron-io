@@ -55,7 +55,18 @@ impl AudioAtlas {
                 ),
                 (SoundFx::GameWin, load_sfx(base, "sfx/gameWin.wav").await),
                 (SoundFx::GameLose, load_sfx(base, "sfx/gameLose.wav").await),
-                (SoundFx::TitleMusic, load_sfx(base, "sfx/jamuary-2023-01.ogg").await),
+
+                // Dang, this sucks, safari on IOS might not support .ogg... Didn't actually test it tho
+                #[cfg(target_arch = "wasm32")]
+                (
+                    SoundFx::TitleMusic,
+                    load_sfx(base, "sfx/jamuary-2023-01.mp3").await,
+                ),
+                #[cfg(not(target_arch = "wasm32"))]
+                (
+                    SoundFx::TitleMusic,
+                    load_sfx(base, "sfx/jamuary-2023-01.ogg").await,
+                ),
                 // (SoundFx::MenuCancel, load_sfx(base, "sfx/menuCancel.wav").await),
                 // (SoundFx::MenuCancel, load_sfx(base, "sfx/menuCancel.wav").await),
             ],
