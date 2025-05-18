@@ -5,6 +5,7 @@ use macroquad::color::colors;
 use macroquad::prelude::*;
 use tron_io_world::WorldState;
 use tron_io_world::client::{WorldClient, WorldEvent};
+use tron_io_world::local::WorldClientLocal;
 
 use crate::context::Context;
 use crate::draw::{draw_grid, draw_rect, draw_rect_lines};
@@ -23,7 +24,8 @@ impl Gameplay {
     pub fn new(_context: &Context, gameoptions: GameOptions) -> Self {
         Self {
             input_map: HashMap::new(),
-            client: gameoptions.client,
+            // client: gameoptions.client,
+            client: WorldClient::new(Box::new(WorldClientLocal::new())),
         }
     }
 }

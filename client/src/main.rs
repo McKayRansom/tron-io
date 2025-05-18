@@ -1,9 +1,7 @@
 use context::Context;
 use gameplay::Gameplay;
 use macroquad::{
-    audio::PlaySoundParams,
-    color::Color,
-    window::{Conf, clear_background, next_frame},
+    audio::PlaySoundParams, color::{Color, BLACK, WHITE}, prelude::{collections::storage, coroutines::start_coroutine}, text::draw_text, time::get_time, window::{clear_background, next_frame, screen_height, screen_width, Conf}
 };
 use scene::{EScene, main_menu::MainMenu};
 
@@ -30,6 +28,31 @@ pub const BACKGROUND_COLOR: Color = Color {
     b: 0.07,
     a: 1.0,
 };
+
+pub async fn load() -> Result<(), macroquad::Error> {
+        let resources_loading = start_coroutine(async move {
+            let ctx = Context::default().await;
+            storage::store(ctx);
+        });
+
+        while !resources_loading.is_done() {
+            clear_background(BLACK);
+            let text = format!(
+                "Loading {}",
+                ".".repeat(((get_time() * 2.) as usize) % 4)
+            );
+            draw_text(
+                &text,
+                screen_width() / 2. - 160.,
+                screen_height() / 2.,
+                40.,
+                WHITE,
+            );
+            next_frame().await;
+        }
+
+        Ok(())
+    }
 
 fn window_conf() -> Conf {
     Conf {
@@ -73,7 +96,8 @@ async fn main() {
     clear_background(BACKGROUND_COLOR);
 
     // loading assets can take a while
-    let mut ctx = Context::default().await;
+    load().await.unwrap();
+    let mut ctx = storage::get_mut::<Context>();
 
     ctx.audio
         .play_sfx_ex(crate::audio::SoundFx::TitleMusic, PlaySoundParams {

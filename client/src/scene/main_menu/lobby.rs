@@ -63,9 +63,7 @@ impl Lobby {
                 });
                 context.switch_scene_to =
                 Some(crate::scene::EScene::Gameplay(crate::scene::GameOptions {
-                    client: WorldClient::new(Box::new(WorldClientOnline::new(
-                        self.socket.take().unwrap(),
-                    ))),
+                    // client: WorldClient::new(Box::new(WorldClientOnline::new(
                 }));
             }
         }

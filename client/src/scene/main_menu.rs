@@ -103,7 +103,7 @@ impl Scene for MainMenu {
             match selected {
                 MenuOption::Local => {
                     ctx.switch_scene_to = Some(EScene::Gameplay(super::GameOptions {
-                        client: WorldClient::new(Box::new(WorldClientLocal::new())),
+                        // client: WorldClient::new(Box::new(WorldClientLocal::new())),
                     }));
                 }
                 MenuOption::Online => {

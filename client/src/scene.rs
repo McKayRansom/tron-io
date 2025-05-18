@@ -1,6 +1,7 @@
 
 pub struct GameOptions {
-    pub client: WorldClient,
+    // pub client: WorldClient,
+    // bool 
 }
 
 pub enum EScene {
@@ -8,7 +9,7 @@ pub enum EScene {
     MainMenu,
 }
 
-use tron_io_world::client::WorldClient;
+// use tron_io_world::client::WorldClient;
 
 use crate::context::Context;
 
