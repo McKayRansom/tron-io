@@ -1,11 +1,13 @@
 use macroquad::{
-    math::Vec2,
-    text::{Font, load_ttf_font},
-    time::get_time,
-    window::{screen_height, screen_width},
+    math::Vec2, miniquad::gl::glFlush, text::{draw_text_ex, load_ttf_font, Font, TextParams}, time::get_time, window::{next_frame, screen_height, screen_width}
 };
 
-use crate::{assets_path::determine_asset_path, audio, input::InputContext, scene::EScene};
+use crate::{
+    assets_path::determine_asset_path,
+    audio,
+    input::InputContext,
+    scene::EScene,
+};
 
 pub struct Context {
     pub font: Font,
@@ -20,10 +22,25 @@ pub struct Context {
 impl Context {
     pub async fn default() -> Self {
         let base_assets_path = determine_asset_path();
+        let font = load_ttf_font(base_assets_path.join("editundo.ttf").to_str().unwrap())
+            .await
+            .unwrap();
+        draw_text_ex(
+            "Loading...",
+            200.,
+            screen_height() / 2.,
+            TextParams {
+                font: Some(&font),
+                font_size: 32,
+                ..Default::default()
+            },
+        );
+        // unsafe {glFlush();}
+        // TODO: This doesn't work, because apparently macroquad clears the frame even if we don't finish drawing before then...
+        // So it get's cleared immediatly after...
+        next_frame().await;
         Self {
-            font: load_ttf_font(base_assets_path.join("editundo.ttf").to_str().unwrap())
-                .await
-                .unwrap(),
+            font: font,
             screen_size: Vec2::new(0.0, 0.0),
             switch_scene_to: None,
             request_quit: false,

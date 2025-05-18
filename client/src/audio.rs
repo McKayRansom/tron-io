@@ -55,7 +55,7 @@ impl AudioAtlas {
                 ),
                 (SoundFx::GameWin, load_sfx(base, "sfx/gameWin.wav").await),
                 (SoundFx::GameLose, load_sfx(base, "sfx/gameLose.wav").await),
-                (SoundFx::TitleMusic, load_sfx(base, "sfx/jamuary-2023-01.wav").await),
+                (SoundFx::TitleMusic, load_sfx(base, "sfx/jamuary-2023-01.ogg").await),
                 // (SoundFx::MenuCancel, load_sfx(base, "sfx/menuCancel.wav").await),
                 // (SoundFx::MenuCancel, load_sfx(base, "sfx/menuCancel.wav").await),
             ],

@@ -1,6 +1,10 @@
 use context::Context;
 use gameplay::Gameplay;
-use macroquad::{audio::PlaySoundParams, window::{clear_background, next_frame, Conf}};
+use macroquad::{
+    audio::PlaySoundParams,
+    color::Color,
+    window::{Conf, clear_background, next_frame},
+};
 use scene::{EScene, main_menu::MainMenu};
 
 // mod bike;
@@ -19,6 +23,13 @@ mod ui;
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 pub const PKG_NAME: &str = env!("CARGO_PKG_NAME");
+
+pub const BACKGROUND_COLOR: Color = Color {
+    r: 0.07,
+    g: 0.07,
+    b: 0.07,
+    a: 1.0,
+};
 
 fn window_conf() -> Conf {
     Conf {
@@ -59,6 +70,9 @@ async fn main() {
 
     log::info!("Starting {} v{}", PKG_NAME, VERSION);
 
+    clear_background(BACKGROUND_COLOR);
+
+    // loading assets can take a while
     let mut ctx = Context::default().await;
 
     ctx.audio
@@ -73,12 +87,7 @@ async fn main() {
     loop {
         // clear_background(colors::BLACK);
 
-        clear_background(macroquad::color::Color {
-            r: 0.07,
-            g: 0.07,
-            b: 0.07,
-            a: 1.0,
-        });
+        clear_background(BACKGROUND_COLOR);
         ctx.update();
 
         current_scene.update(&mut ctx);

@@ -7,7 +7,7 @@ pub enum Size {
 }
 
 use macroquad::color::Color;
-use macroquad::text::{TextDimensions, TextParams, draw_text_ex};
+use macroquad::text::{draw_text_ex, Font, TextDimensions, TextParams};
 
 use crate::context::Context;
 
@@ -20,6 +20,7 @@ pub fn draw_text(ctx: &Context, text: &str, x: f32, y: f32, size: Size, color: C
         ..Default::default()
     });
 }
+
 
 pub fn draw_text_screen_centered(ctx: &Context, text: &str, y: f32, size: Size, color: Color) {
     let text_size = measure_text(ctx, text, size);
