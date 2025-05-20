@@ -21,6 +21,8 @@ impl ServerConnectionState {
 
     pub fn on_msg(&mut self, msg: &ClientMsg, world: &mut WorldServer) -> Option<ServerMsg> {
         let mut send_response = false;
+        // this seems jank...
+        let mut send_options = false;
 
         if self.player_mappings.len() < msg.players.len() {
             for i in self.player_mappings.len()..msg.players.len() {
@@ -28,6 +30,7 @@ impl ServerConnectionState {
                 self.player_mappings.push(id);
                 log::info!("Player {} joined", id);
                 send_response = true;
+                send_options = true;
             }
         }
 
@@ -38,7 +41,7 @@ impl ServerConnectionState {
         self.state = msg.state;
 
         for (i, player) in msg.players.iter().enumerate() {
-            send_response |= world.update_player(self.player_mappings[i], player);
+            send_response |= world.update_player(&mut self.player_mappings[i], player);
         }
 
         let last_update = world.get_last_update();
@@ -58,6 +61,12 @@ impl ServerConnectionState {
                 players: world.players.clone(),
                 state: world.world_state,
                 grid_update: Some(world.last_update.clone()),
+                options: if send_options {
+                    Some(world.options)
+                } else {
+                    None
+                },
+                score: world.scores.clone(),
             })
         } else {
             None
@@ -70,6 +79,8 @@ impl ServerConnectionState {
             players: world.players.clone(),
             state: world.world_state,
             grid_update: None,
+            options: None,
+            score: world.scores.clone(), // unnesscares clones problably
         };
         let last_update = world.get_last_update();
         if self.tick != last_update.tick && world.world_state == WorldState::Playing {

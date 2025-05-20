@@ -3,14 +3,15 @@ use std::collections::HashMap;
 use macroquad::audio::PlaySoundParams;
 use macroquad::color::colors;
 use macroquad::prelude::*;
-use tron_io_world::WorldState;
 use tron_io_world::client::{WorldClient, WorldEvent};
 use tron_io_world::local::WorldClientLocal;
+use tron_io_world::{GridOptions, WorldState};
 
+use crate::colors::get_team_color;
 use crate::context::Context;
 use crate::draw::{draw_grid, draw_rect, draw_rect_lines};
 use crate::input::InputType;
-use crate::scene::{GameOptions, Scene};
+use crate::scene::Scene;
 use crate::text::{draw_text, draw_text_screen_centered, measure_text, text_size};
 use crate::{audio::SoundFx, colors::get_color};
 use crate::{input, text};
@@ -21,11 +22,11 @@ pub struct Gameplay {
 }
 
 impl Gameplay {
-    pub fn new(_context: &Context, _gameoptions: GameOptions) -> Self {
+    pub fn new(_context: &Context, gameoptions: GridOptions) -> Self {
         Self {
             input_map: HashMap::new(),
             // client: gameoptions.client,
-            client: WorldClient::new(Box::new(WorldClientLocal::new())),
+            client: WorldClient::new(Box::new(WorldClientLocal::new(gameoptions))),
         }
     }
 }
@@ -187,12 +188,15 @@ impl Scene for Gameplay {
             let mut color = colors::WHITE;
             let (text, subtext): (String, String) = match self.client.game_state {
                 WorldState::GameOver(winner) => (
-                    if let Some(local_player) = self.client.local_player(winner) {
-                        color = get_color(self.client.grid.get_color(winner));
-                        format!("Player P{} won!", local_player)
-                    } else {
-                        "Game Lost!".into()
+                    // if let Some(local_player) = self.client.local_player(winner) {
+                    {
+                        let (team_color, name) = get_team_color(winner);
+                        color = team_color;
+                        format!("Team {} won!", name)
                     },
+                    // } else {
+                    //     "Game Lost!".into()
+                    // },
                     "Press [enter] to reboot or [delete] to exit.".into(),
                 ),
                 WorldState::Waiting => (
@@ -200,13 +204,12 @@ impl Scene for Gameplay {
                     "Press [enter] to start.".into(),
                 ),
                 WorldState::RoundOver(winner) => (
-                    if winner.is_none() {
-                        "Round tied".into()
-                    } else if let Some(local_player) = self.client.local_player(winner.unwrap()) {
-                        color = get_color(self.client.grid.get_color(winner.unwrap()));
-                        format!("Round won by P{}", local_player)
+                    if let Some(winner) = winner {
+                        let (team_color, name) = get_team_color(winner);
+                        color = team_color;
+                        format!("Round won by team {}", name)
                     } else {
-                        "Round Lost...".into()
+                        "Round tied".into()
                     },
                     "Press [enter] when ready.".into(),
                 ),
@@ -226,34 +229,64 @@ impl Scene for Gameplay {
             );
             pos.y += 100.;
 
-            for (i, player) in self.client.server_players.iter().enumerate() {
-                let color = get_color(self.client.grid.bikes[i].get_color());
-                let measure = measure_text(&ctx, &player.name, text::Size::Large);
-                let box_size = text_size(text::Size::Medium);
-                const SCORE_CENTER_PAD: f32 = 10.;
-                draw_text(
-                    &ctx,
-                    &player.name,
-                    pos.x - measure.width - SCORE_CENTER_PAD,
-                    pos.y - measure.height / 2.,
-                    text::Size::Large,
-                    color,
-                );
-                for score in 0..self.client.score_win {
-                    let rect: Rect = Rect::new(
-                        pos.x + SCORE_CENTER_PAD + score as f32 * (box_size + 10) as f32,
-                        pos.y - (box_size as f32) / 2. - measure.height,
-                        box_size as f32,
-                        box_size as f32,
-                    );
-                    // score is 0-based but we want to draw 1-based
-                    if score < player.score {
-                        draw_rect(rect, color);
+            if matches!(self.client.game_state, WorldState::Waiting) {
+                // draw team select
+                const TEAM_SPACING: f32 = 200.;
+                const PLAYER_SPACING: f32 = 50.;
+                pos.x -= (self.client.grid_options.teams - 1) as f32 * TEAM_SPACING / 2.;
+                for (i, player) in self.client.server_players.iter().enumerate() {
+                    let bike = &self.client.grid.bikes[i];
+                    let color = get_color(bike.get_color());
+                    let team = bike.team;
+                    // let measure = measure_text(&ctx, &player.name, text::Size::Large);
+                    // let box_size = text_size(text::Size::Medium);
+                    // const SCORE_CENTER_PAD: f32 = 10.;
+                    let name = if player.ready {
+                        player.name.clone()
                     } else {
-                        draw_rect_lines(rect, 8., color);
-                    }
+                        format!("<{}>", player.name)
+                    };
+                    draw_text(
+                        &ctx,
+                        &name,
+                        pos.x + TEAM_SPACING * team as f32,
+                        pos.y + PLAYER_SPACING * bike.player as f32,
+                        text::Size::Large,
+                        color,
+                    );
+                    // pos.y += 50.;
                 }
-                pos.y += 50.;
+            } else {
+                // draw score
+                for team in 0..self.client.grid_options.teams {
+                    let (color, name) = get_team_color(team);
+                    let measure = measure_text(&ctx, &name, text::Size::Large);
+                    let box_size = text_size(text::Size::Medium);
+                    const SCORE_CENTER_PAD: f32 = 10.;
+                    draw_text(
+                        &ctx,
+                        &name,
+                        pos.x - measure.width - SCORE_CENTER_PAD,
+                        pos.y - measure.height / 2.,
+                        text::Size::Large,
+                        color,
+                    );
+                    for score in 0..self.client.score_win {
+                        let rect: Rect = Rect::new(
+                            pos.x + SCORE_CENTER_PAD + score as f32 * (box_size + 10) as f32,
+                            pos.y - (box_size as f32) / 2. - measure.height,
+                            box_size as f32,
+                            box_size as f32,
+                        );
+                        // score is 0-based but we want to draw 1-based
+                        if &score < self.client.scores.get(team as usize).unwrap_or(&0) {
+                            draw_rect(rect, color);
+                        } else {
+                            draw_rect_lines(rect, 8., color);
+                        }
+                    }
+                    pos.y += 50.;
+                }
             }
         }
     }

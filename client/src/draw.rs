@@ -4,7 +4,7 @@ use macroquad::{
     shapes::{draw_line, draw_rectangle, draw_rectangle_lines},
     window::{screen_height, screen_width},
 };
-use tron_io_world::grid::{Cell, Grid, Point, SQUARES};
+use tron_io_world::grid::{Cell, Grid, Point};
 
 pub fn cell_color(cell: &Cell) -> Color {
     let mut color = crate::colors::get_color(cell.get_color());
@@ -31,11 +31,11 @@ pub struct GridDrawInfo {
 const MARGIN: f32 = 10.;
 
 impl GridDrawInfo {
-    pub fn new() -> Self {
+    pub fn new(grid: &Grid) -> Self {
         let game_size = screen_width().min(screen_height()) - MARGIN * 2.;
         let offset_x = (screen_width() - game_size) / 2.;
         let offset_y = (screen_height() - game_size) / 2.;
-        let sq_size = game_size / SQUARES as f32;
+        let sq_size = game_size /grid.size().0 as f32;
 
         Self {
             game_size,
@@ -59,7 +59,7 @@ impl GridDrawInfo {
 }
 
 pub fn draw_grid(grid: &Grid) {
-    let draw_info = GridDrawInfo::new();
+    let draw_info = GridDrawInfo::new(grid);
     draw_rectangle(
         draw_info.offset_x - MARGIN,
         draw_info.offset_y - MARGIN,
@@ -79,8 +79,9 @@ pub fn draw_grid(grid: &Grid) {
     // const GRID_LINE_INTERVAL: i16 = 5;
 
     // draw lines every 4 squares
-    for i in 0..SQUARES + 1 {
-        if i != 0 && i != SQUARES {
+    let (size_y, size_x) = grid.size();
+    for i in 0..size_x + 1 {
+        if i != 0 && i != size_x {
             // if i % GRID_LINE_INTERVAL != 0 {
             continue;
         }
@@ -105,8 +106,8 @@ pub fn draw_grid(grid: &Grid) {
     }
     // Draw bikes
     // TODO: draw player names, idea: use different fonts to show alive/boost/dead
-    for y in 0..SQUARES {
-        for x in 0..SQUARES {
+    for y in 0..size_y {
+        for x in 0..size_x {
             if grid.occupied.is_occupied((x, y)) {
                 let point = draw_info.grid_to_screen((x, y));
                 draw_rectangle(

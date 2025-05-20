@@ -3,15 +3,40 @@ use std::hash::{DefaultHasher, Hash, Hasher};
 use bike::{Bike, BikeUpdate};
 use nanoserde::{DeBin, SerBin};
 
-pub mod bike;
+use crate::{GridOptions, GridSize};
 
-pub const SQUARES: i16 = 80;
+pub mod bike;
 
 pub type Point = (i16, i16);
 
 #[derive(Clone)]
 pub struct Cell {
     val: u8,
+}
+
+type ColorId = u8;
+type TeamId = u8;
+type PlayerId = u8;
+type BikeId = u8;
+
+pub fn color_to_team(color: ColorId) -> TeamId {
+    color / 4
+}
+
+pub fn team_to_color(team: TeamId, player: PlayerId) -> ColorId {
+    team * 4 + player
+}
+
+pub fn bike_id(options: &GridOptions, team: TeamId, player: PlayerId) -> BikeId {
+    team * options.players + player
+}
+
+pub fn team_from_bike(options: &GridOptions, bike_id: BikeId) -> TeamId {
+    bike_id / options.players
+}
+
+pub fn player_from_bike(options: &GridOptions, bike_id: BikeId) -> PlayerId {
+    bike_id % options.players
 }
 
 impl Cell {
@@ -40,7 +65,7 @@ impl Cell {
         self.val & Self::BOOST_MASK != 0
     }
 
-    pub fn get_color(&self) -> u8 {
+    pub fn get_color(&self) -> ColorId {
         if self.val != 0 {
             (self.val & Self::COLOR_MASK) - 1
         } else {
@@ -55,31 +80,32 @@ impl Cell {
 }
 
 pub struct Occupied {
+    size: Point,
     occupied: Vec<Vec<Cell>>,
 }
 
 impl Occupied {
-    pub fn new() -> Self {
+    pub fn new(size: GridSize) -> Self {
+        let size = size.dim();
         Self {
-            occupied: vec![vec![Cell::new(); SQUARES as usize]; SQUARES as usize],
+            size,
+            occupied: vec![vec![Cell::new(); size.1 as usize]; size.0 as usize],
         }
     }
 
     pub fn is_occupied(&self, pos: Point) -> bool {
-        if pos.0 < 0 || pos.1 < 0 || pos.0 >= SQUARES || pos.1 >= SQUARES {
+        if pos.0 < 0 || pos.1 < 0 || pos.0 >= self.size.0 || pos.1 >= self.size.1 {
             return true;
         }
         self.occupied[pos.1 as usize][pos.0 as usize].is_occupied()
     }
 
     pub fn get_cell(&self, pos: Point) -> Option<&Cell> {
-        self.occupied
-            .get(pos.1 as usize)?
-            .get(pos.0 as usize)
+        self.occupied.get(pos.1 as usize)?.get(pos.0 as usize)
     }
 
     pub fn occupy(&mut self, pos: Point, id: u8, boost: bool) -> bool {
-        if pos.0 < 0 || pos.1 < 0 || pos.0 >= SQUARES || pos.1 >= SQUARES {
+        if pos.0 < 0 || pos.1 < 0 || pos.0 >= self.size.0 || pos.1 >= self.size.1 {
             return true;
         }
 
@@ -102,6 +128,17 @@ pub struct GridUpdateMsg {
     pub updates: Vec<BikeUpdate>,
 }
 
+// // tick 0 is an invalid Tick...
+// impl Default for GridUpdateMsg {
+//     fn default() -> Self {
+//         Self {
+//             tick: 1,
+//             hash: Default::default(),
+//             updates: Default::default(),
+//         }
+//     }
+// }
+
 pub struct Grid {
     pub tick: u32,
     pub hash: u64,
@@ -115,26 +152,15 @@ pub enum UpdateResult {
     InProgress,
 }
 
-// pub enum GridSize {
-//     Small,
-//     Medium,
-//     Large,
-// }
-
-// pub struct GridSettings {
-// size: GridSize,
-// teams
-// }
-
 impl Grid {
-    pub fn new() -> Self {
-        let mut occupied = Occupied::new();
-        let bikes = vec![
-            Bike::new(&mut occupied, 0, 6, (8, SQUARES / 2), bike::RIGHT),
-            Bike::new(&mut occupied, 1, 10, (SQUARES - 9, SQUARES / 2), bike::LEFT),
-            // Bike::new(&mut occupied, 2, 0, (SQUARES / 2 + 1, 11), bike::DOWN),
-            // Bike::new(&mut occupied, 3, 4, (SQUARES / 2 - 1, SQUARES - 11), bike::UP),
-        ];
+    pub fn new(options: GridOptions) -> Self {
+        let mut occupied = Occupied::new(options.grid_size);
+        let mut bikes: Vec<Bike> = Vec::new();
+        for team in 0..options.teams {
+            for player in 0..options.players {
+                bikes.push(Bike::new(&mut occupied, bikes.len() as u8, team, player));
+            }
+        }
         Self {
             hash: 0,
             bikes,
@@ -149,24 +175,31 @@ impl Grid {
     }
 
     pub fn update(&mut self) -> UpdateResult {
-        let mut winning_player: Option<u8> = None;
-        let mut alive_players = 0;
+        let mut winning_team: Option<u8> = None;
+        let mut winner = true;
         let mut hasher = DefaultHasher::new();
-        for (i, bike) in self.bikes.iter_mut().enumerate() {
+        for bike in self.bikes.iter_mut() {
             if bike.update(&mut self.occupied) {
-                winning_player = Some(i as u8);
-                alive_players += 1;
+                if winning_team.is_some_and(|team| team != bike.team) {
+                    winner = false;
+                } else {
+                    winning_team = Some(bike.team);
+                }
             }
 
             // Compute hash for the bike
             bike.hash(&mut hasher);
         }
         self.hash = hasher.finish();
-        if alive_players <= 1 {
-            UpdateResult::MatchOver(winning_player)
+        if winner {
+            UpdateResult::MatchOver(winning_team)
         } else {
             UpdateResult::InProgress
         }
+    }
+
+    pub fn size(&self) -> Point {
+        self.occupied.size
     }
 }
 

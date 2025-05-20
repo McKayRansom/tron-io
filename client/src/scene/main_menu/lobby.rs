@@ -61,7 +61,7 @@ impl Lobby {
                     players: Vec::new(),
                 });
                 context.switch_scene_to =
-                Some(crate::scene::EScene::Gameplay(crate::scene::GameOptions::default()));
+                Some(crate::scene::EScene::Gameplay(crate::scene::GridOptions::default()));
             }
         }
     }

@@ -25,16 +25,16 @@ pub struct ClientPlayer {
     pub name: String,
     // optimization: bitpack
     pub ready: bool,
-    // pub team: u8,
+    pub team_request: u8,
 }
 
 #[derive(DeBin, SerBin, Debug, Clone)]
 pub struct ServerPlayer {
-    pub score: u8,
+    // pub score: u8,
     pub name: String,
     pub ready: bool,
     pub is_ai: bool,
-    // pub team: u8,
+    // pub team: u8, (This is determined by the player ID for now)
 }
 
 #[derive(DeBin, SerBin, Debug, Clone)]
@@ -45,6 +45,8 @@ pub struct ServerMsg {
     pub players: Vec<ServerPlayer>,
     pub state: WorldState,
     pub grid_update: Option<GridUpdateMsg>,
+    pub options: Option<GridOptions>,
+    pub score: Vec<u8>,
 }
 
 #[derive(DeBin, SerBin, Debug, Clone)]
@@ -82,5 +84,63 @@ pub trait ClientConnection {
     fn send(&mut self, msg: &ClientMsg);
     fn try_recv(&mut self) -> Option<ServerMsg>;
     fn update(&mut self, time: f64);
+}
+
+#[derive(Debug, Default, Clone, Copy, DeBin, SerBin, PartialEq, Eq)]
+pub enum GridSize {
+    #[default]
+    Small,
+    Medium,
+    Large,
+}
+
+impl GridSize {
+    pub fn incr(&mut self)  {
+        *self = match self {
+            GridSize::Small => GridSize::Medium,
+            GridSize::Medium => GridSize::Large,
+            GridSize::Large => GridSize::Large,
+        }
+    }
+    pub fn decr(&mut self) {
+        *self = match self {
+            GridSize::Small => GridSize::Small,
+            GridSize::Medium => GridSize::Medium,
+            GridSize::Large => GridSize::Large,
+        }
+    }
+    pub fn dim(&self) -> (i16, i16) {
+        match self {
+            GridSize::Small => (80, 80),
+            GridSize::Medium => (100, 100),
+            GridSize::Large => (120, 120),
+        }
+
+    }
+}
+
+pub const MIN_TEAMS: u8 = 2;
+pub const MAX_TEAMS: u8 = 4;
+
+pub const MIN_PLAYERS: u8 = 1;
+pub const MAX_PLAYERS: u8 = 4;
+
+#[derive(Debug, Clone, Copy, DeBin, SerBin, PartialEq, Eq)]
+pub struct GridOptions {
+    pub grid_size: GridSize,
+    pub teams: u8,
+    pub players: u8,
+    // teams
+    // boost? other powerups?
+}
+
+impl Default for GridOptions {
+    fn default() -> Self {
+        Self {
+            grid_size: Default::default(),
+            teams: MIN_TEAMS,
+            players: MIN_PLAYERS,
+        }
+    }
 }
 

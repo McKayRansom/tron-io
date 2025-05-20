@@ -1,5 +1,5 @@
 use crate::{
-    ClientPlayer, ServerPlayer,
+    ClientPlayer, GridOptions, ServerPlayer,
     grid::{Grid, bike::BikeUpdate},
 };
 
@@ -21,26 +21,30 @@ pub struct WorldClient {
     pub events: Vec<WorldEvent>, // for sfx and such
 
     // remote
+    pub grid_options: GridOptions,
     pub local_player_ids: Vec<u8>, // translation ClientPlayer index -> ServerPlayer index
     pub server_players: Vec<ServerPlayer>,
     pub game_state: WorldState,
     connection: Box<dyn ClientConnection>,
+    pub scores: Vec<u8>,
 }
 
 impl WorldClient {
     pub fn new(connection: Box<dyn ClientConnection>) -> Self {
         Self {
             // local
-            grid: Grid::new(),
+            grid: Grid::new(GridOptions::default()),
             score_win: super::SCORE_WIN,
             local_players: Vec::new(),
             events: Vec::new(),
 
             // Remote
+            grid_options: GridOptions::default(),
             local_player_ids: Vec::new(),
             server_players: Vec::new(),
             game_state: WorldState::Waiting,
             connection,
+            scores: Vec::new(),
         }
     }
 
@@ -77,6 +81,7 @@ impl WorldClient {
                         if self.game_state == WorldState::Waiting {
                             let new_player_id = self.local_players.len() as u8;
                             self.local_players.push(ClientPlayer {
+                                team_request: 0,
                                 name: format!("p{}", self.local_players.len()),
                                 ready: false,
                             });
@@ -98,6 +103,26 @@ impl WorldClient {
                         self.send_msg(None);
                     } else {
                         log::warn!("Unknown player: {}", local_player_id.unwrap());
+                    }
+                } else if local_player_id.is_some() && matches!(self.game_state, WorldState::Waiting) {
+                    if let Some(player) = self
+                        .local_players
+                        .get_mut(local_player_id.unwrap() as usize)
+                    {
+                        if action == super::Action::Right {
+                            // do the validation of teams full server side
+                            if player.team_request < self.grid_options.teams - 1 {
+                                player.team_request += 1;
+                                log::info!("Request team {}", player.team_request);
+                                self.send_msg(None);
+                            }
+                        } else if action == super::Action::Left {
+                            if player.team_request > 0 {
+                                player.team_request -= 1;
+                                log::info!("Request team {}", player.team_request);
+                                self.send_msg(None);
+                            }
+                        }
                     }
                 }
             }
@@ -131,8 +156,16 @@ impl WorldClient {
         while let Some(server_msg) = self.connection.try_recv() {
             log::debug!("Received server message: {:?}", server_msg);
             // self.connection_id = Some(server_msg.connection_id);
+            if let Some(options) = &server_msg.options {
+                if &self.grid_options != options {
+                    log::info!("Options changed: {:?}", options);
+                    self.grid_options = *options;
+                    self.grid = Grid::new(*options);
+                }
+            }
             self.server_players = server_msg.players.clone();
             self.local_player_ids = server_msg.local_player_ids.clone();
+            self.scores = server_msg.score.clone();
             if self.game_state != server_msg.state {
                 self.game_state = server_msg.state;
                 for player in self.local_players.iter_mut() {
@@ -141,11 +174,11 @@ impl WorldClient {
                 match self.game_state {
                     WorldState::Waiting => {
                         // New game
-                        self.grid = Grid::new();
+                        self.grid = Grid::new(self.grid_options);
                     }
                     WorldState::Playing => {
                         // New round (potentially)
-                        self.grid = Grid::new();
+                        self.grid = Grid::new(self.grid_options);
                     }
                     _ => {}
                 }
@@ -157,7 +190,9 @@ impl WorldClient {
                 if let Some(grid_update) = server_msg.grid_update {
                     // This is expected to often not be the case as the server sends out ticks every 10ms
                     //  we may not get back before the server sends a duplicate
-                    if grid_update.tick == self.grid.tick + 1 {
+                    if grid_update.tick == self.grid.tick {
+                        // log::warn!("Got stale update");
+                    } else {
                         let _ = self.grid.apply_updates(&grid_update);
 
                         if self.grid.hash != grid_update.hash {
@@ -167,6 +202,7 @@ impl WorldClient {
                                 grid_update.hash,
                                 grid_update.tick
                             );
+                            log::info!("Updates: {:?}", grid_update);
                         }
                         self.events.push(WorldEvent::ServerUpdate(grid_update));
 

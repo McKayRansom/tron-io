@@ -48,7 +48,7 @@ impl Bike {
             .bikes
             .iter()
             .filter_map(|bike| {
-                if bike.id == self.id {
+                if bike.id == self.id || bike.team == self.team {
                     None
                 } else {
                     Some((bike.head.0 + bike.dir.0, bike.head.1 + bike.dir.1))

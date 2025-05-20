@@ -1,8 +1,8 @@
 use macroquad::{
     math::Vec2,
-    text::{Font, load_ttf_font},
+    text::{load_ttf_font, Font},
     time::get_time,
-    window::{screen_height, screen_width},
+    window::{screen_height, screen_width, set_fullscreen},
 };
 
 use crate::{
@@ -28,6 +28,7 @@ impl Context {
             .await
             .unwrap();
         let settings = GameSettings::load();
+        set_fullscreen(settings.fullscreen);
         Self {
             font: font,
             screen_size: Vec2::new(0.0, 0.0),
@@ -42,6 +43,7 @@ impl Context {
 
     pub fn save_settings(&mut self) {
         self.settings.save();
+        set_fullscreen(self.settings.fullscreen);
         self.audio.settings(&self.settings);
     }
 

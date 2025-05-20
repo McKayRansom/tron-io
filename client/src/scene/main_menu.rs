@@ -1,10 +1,11 @@
 // use super::settings::Settings;
-use super::{EScene, Scene};
+use super::Scene;
 // use crate::consts::*;
 use crate::context::Context;
 use crate::text::{self, draw_text};
 use crate::ui::menu::{Menu};
 use credits::Credits;
+use game_options::GameOptionsScene;
 use macroquad::color::colors;
 use macroquad::math::vec2;
 use settings_scene::SettingsScene;
@@ -12,11 +13,13 @@ use settings_scene::SettingsScene;
 mod credits;
 mod lobby;
 mod settings_scene;
+mod game_options;
 
 pub struct MainMenu {
     selected: usize,
     settings_subscene: SettingsScene,
     credits_subscene: Credits,
+    options_subscene: GameOptionsScene,
     lobby: Option<lobby::Lobby>,
 }
 
@@ -30,6 +33,7 @@ impl MainMenu {
             selected: 0,
             credits_subscene: Credits::new(ctx),
             settings_subscene: SettingsScene::new(ctx),
+            options_subscene: GameOptionsScene::new(ctx),
             lobby: None,
         }
     }
@@ -54,6 +58,11 @@ impl Scene for MainMenu {
             return;
         }
 
+        if self.options_subscene.active {
+            self.options_subscene.draw(ctx);
+            return;
+        }
+
         draw_text(
             ctx,
             if self.lobby.is_some() {
@@ -74,8 +83,8 @@ impl Scene for MainMenu {
 
         let mut menu = Menu::new(vec2(X_INSET, MENU_CONTENT_Y), self.selected);
 
-        if menu.option("Local", ctx) {
-            ctx.switch_scene_to = Some(EScene::Gameplay(super::GameOptions::default()));
+        if menu.option("New Grid", ctx) {
+            self.options_subscene.active = true;
         }
         if menu.option("Online", ctx) {
             self.lobby = Some(lobby::Lobby::new(ctx));

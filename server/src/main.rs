@@ -4,7 +4,7 @@ use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use tron_io_world::server::WorldServer;
 use tron_io_world::server::connection::ServerConnectionState;
-use tron_io_world::{ClientMsg, ServerMsg, WorldState};
+use tron_io_world::{ClientMsg, GridOptions, ServerMsg, WorldState};
 
 #[derive(Default)]
 struct ClientState {
@@ -38,7 +38,8 @@ impl ClientState {
             }
             if self.world.is_none() {
                 // if there is no other waiting player, add this one to the queue
-                let world = WorldServer::new();
+                // TODO: Get options from elsewhere?
+                let world = WorldServer::new(GridOptions::default());
 
                 log::info!("Starting new world");
 

@@ -1,5 +1,7 @@
 use std::collections::VecDeque;
 
+use crate::GridOptions;
+
 use super::{
     ClientConnection, ClientMsg, ServerMsg,
     server::{WorldServer, connection::ServerConnectionState},
@@ -12,11 +14,11 @@ pub struct WorldClientLocal {
 }
 
 impl WorldClientLocal {
-    pub fn new() -> Self {
+    pub fn new(options: GridOptions) -> Self {
         Self {
             response: VecDeque::new(),
             connection: ServerConnectionState::new(),
-            world: WorldServer::new(),
+            world: WorldServer::new(options),
         }
     }
 }

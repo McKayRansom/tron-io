@@ -1,6 +1,6 @@
 use nanoserde::{DeBin, SerBin};
 
-use crate::{grid::Point, Action};
+use crate::{grid::{team_to_color, Point}, Action};
 
 use super::Occupied;
 
@@ -21,6 +21,34 @@ pub fn invert_dir(dir: Point) -> Point {
     }
 }
 
+pub fn rotate_right(dir: Point) -> Point {
+    match dir {
+        UP => RIGHT,
+        RIGHT => DOWN,
+        DOWN => LEFT,
+        LEFT => UP,
+        _ => panic!("Invalid direction"),
+    }
+}
+
+pub fn rotate_left(dir: Point) -> Point {
+    match dir {
+        UP => LEFT,
+        RIGHT => UP,
+        DOWN => RIGHT,
+        LEFT => DOWN,
+        _ => panic!("Invalid direction"),
+    }
+}
+
+pub fn multiply(dir: Point, val: i16) -> Point {
+    (dir.0 * val, dir.1 * val)
+}
+
+pub fn add(dir: Point, dir2: Point) -> Point {
+    (dir.0 + dir2.0, dir.1 + dir2.1)
+}
+
 #[derive(DeBin, SerBin, Debug, Clone, Copy)]
 pub struct BikeUpdate {
     pub id: u8,
@@ -38,6 +66,27 @@ impl BikeUpdate {
     }
 }
 
+fn bike_pos(team: u8, player: u8, size: Point) -> (Point, Point) {
+    let (pos, dir) = match team {
+        0 => ((8, size.1 / 2), RIGHT),
+        1 => ((size.0 - 9, size.1 / 2), LEFT),
+        2 => ((size.0 / 2, 8), DOWN),
+        3 => ((size.0 / 2, size.1 - 8), UP),
+        _ => todo!(),
+    };
+
+    let player_offset = match player {
+        0 => (0, 0),
+        1 => add(multiply(rotate_right(dir), 3), invert_dir(dir)),
+        2 => add(multiply(rotate_left(dir), 3), invert_dir(dir)),
+        3 => add(multiply(rotate_right(dir), 5), multiply(invert_dir(dir), 3)),
+        4 => add(multiply(rotate_left(dir), 5), multiply(invert_dir(dir), 3)),
+        _ => unimplemented!(),
+    };
+
+    (add(pos, player_offset), dir)
+}
+
 type Ticks = u8;
 
 pub const BOOST_COUNT: u8 = 3;
@@ -50,6 +99,8 @@ const NORMAL_SPEED: Ticks = 1;
 #[derive(Hash, Eq, PartialEq, Debug)]
 pub struct Bike {
     pub id: u8,
+    pub team: u8,
+    pub player: u8,
     color: u8,
     head: Point,
     dir: Point,
@@ -59,11 +110,16 @@ pub struct Bike {
     pub boost_count: u8,
 }
 
+
 impl Bike {
-    pub fn new(grid: &mut Occupied, id: u8, color: u8, head: Point, dir: Point) -> Self {
+    pub fn new(grid: &mut Occupied, id: u8, team: u8, player: u8) -> Self {
+        let (head, dir) = bike_pos(team, player, grid.size);
+        let color = team_to_color(team, player);
         assert!(!grid.occupy(head, color, false));
         Self {
             id,
+            team,
+            player,
             color,
             head,
             dir,

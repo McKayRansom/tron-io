@@ -1,33 +1,5 @@
-#[derive(Debug, Default)]
-pub enum GridSize {
-    #[default]
-    Small,
-    Medium,
-    Large,
-}
 
-pub struct GameOptions {
-    grid_size: GridSize,
-    players: u8,
-    // teams
-    // boost? other powerups?
-}
-
-impl Default for GameOptions {
-    fn default() -> Self {
-        Self {
-            grid_size: Default::default(),
-            players: 2,
-        }
-    }
-}
-
-pub enum EScene {
-    Gameplay(GameOptions),
-    MainMenu,
-}
-
-// use tron_io_world::client::WorldClient;
+use tron_io_world::GridOptions;
 
 use crate::context::Context;
 
@@ -36,6 +8,12 @@ use crate::context::Context;
 pub mod main_menu;
 // pub mod pause;
 // pub mod settings;
+
+
+pub enum EScene {
+    Gameplay(GridOptions),
+    MainMenu,
+}
 
 pub trait Scene {
     fn update(&mut self, ctx: &mut Context);
