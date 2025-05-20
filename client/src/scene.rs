@@ -1,7 +1,25 @@
+#[derive(Debug, Default)]
+pub enum GridSize {
+    #[default]
+    Small,
+    Medium,
+    Large,
+}
 
 pub struct GameOptions {
-    // pub client: WorldClient,
-    // bool 
+    grid_size: GridSize,
+    players: u8,
+    // teams
+    // boost? other powerups?
+}
+
+impl Default for GameOptions {
+    fn default() -> Self {
+        Self {
+            grid_size: Default::default(),
+            players: 2,
+        }
+    }
 }
 
 pub enum EScene {

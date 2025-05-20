@@ -3,49 +3,33 @@ use super::{EScene, Scene};
 // use crate::consts::*;
 use crate::context::Context;
 use crate::text::{self, draw_text};
-use crate::ui::menu::{Menu, MenuItem};
+use crate::ui::menu::{Menu};
 use credits::Credits;
 use macroquad::color::colors;
 use macroquad::math::vec2;
-use tron_io_world::client::WorldClient;
-use tron_io_world::local::WorldClientLocal;
+use settings_scene::SettingsScene;
 
 mod credits;
 mod lobby;
+mod settings_scene;
 
 pub struct MainMenu {
-    menu: Menu<MenuOption>,
-    // settings_subscene: Settings,
+    selected: usize,
+    settings_subscene: SettingsScene,
     credits_subscene: Credits,
     lobby: Option<lobby::Lobby>,
 }
 
-enum MenuOption {
-    Local,
-    Online,
-    // Settings,
-    Credits,
-    #[cfg(not(target_family = "wasm"))]
-    Quit,
-}
-
 const X_INSET: f32 = 100.;
 const TITLE_Y_INSET: f32 = 100.;
-const MENU_CONTENT_Y: f32 = 400.;
+const MENU_CONTENT_Y: f32 = 200.;
 
 impl MainMenu {
     pub async fn new(ctx: &mut Context) -> Self {
-
         Self {
-            menu: Menu::new(vec![
-                MenuItem::new("Local".into(), MenuOption::Local),
-                MenuItem::new("Online".into(), MenuOption::Online),
-                // MenuItem::new("Settings".into(), MenuOption::Settings),
-                MenuItem::new("Credits".into(), MenuOption::Credits),
-                #[cfg(not(target_family = "wasm"))]
-                MenuItem::new("Quit".into(), MenuOption::Quit),
-            ]),
+            selected: 0,
             credits_subscene: Credits::new(ctx),
+            settings_subscene: SettingsScene::new(ctx),
             lobby: None,
         }
     }
@@ -53,15 +37,6 @@ impl MainMenu {
 
 impl Scene for MainMenu {
     fn update(&mut self, ctx: &mut Context) {
-        // if self.settings_subscene.active {
-        //     self.settings_subscene.update(ctx);
-        //     return;
-        // }
-
-        if self.credits_subscene.active {
-            self.credits_subscene.update(ctx);
-            return;
-        }
         if let Some(lobby) = &mut self.lobby {
             lobby.update(ctx);
             return;
@@ -69,10 +44,10 @@ impl Scene for MainMenu {
     }
 
     fn draw(&mut self, ctx: &mut Context) {
-        // if self.settings_subscene.active {
-        //     self.settings_subscene.draw(ctx);
-        //     return;
-        // }
+        if self.settings_subscene.active {
+            self.settings_subscene.draw(ctx);
+            return;
+        }
 
         if self.credits_subscene.active {
             self.credits_subscene.draw(ctx);
@@ -97,31 +72,33 @@ impl Scene for MainMenu {
             return;
         }
 
-        let menu_pos = vec2(X_INSET, MENU_CONTENT_Y);
+        let mut menu = Menu::new(vec2(X_INSET, MENU_CONTENT_Y), self.selected);
 
-        if let Some(selected) = self.menu.draw(ctx, menu_pos) {
-            match selected {
-                MenuOption::Local => {
-                    ctx.switch_scene_to = Some(EScene::Gameplay(super::GameOptions {
-                        // client: WorldClient::new(Box::new(WorldClientLocal::new())),
-                    }));
-                }
-                MenuOption::Online => {
-                    // ctx.switch_scene_to = Some(EScene::Gameplay);
-                    self.lobby = Some(lobby::Lobby::new(ctx));
-                }
-                // MenuOption::Settings => {
-                //     self.settings_subscene.active = true;
-                // }
-                MenuOption::Credits => {
-                    self.credits_subscene.active = true;
-                }
-                #[cfg(not(target_family = "wasm"))]
-                MenuOption::Quit => {
-                    ctx.request_quit = true;
-                }
-            }
+        if menu.option("Local", ctx) {
+            ctx.switch_scene_to = Some(EScene::Gameplay(super::GameOptions::default()));
         }
+        if menu.option("Online", ctx) {
+            self.lobby = Some(lobby::Lobby::new(ctx));
+        }
+        if menu.option("Settings", ctx) {
+            self.settings_subscene.active = true;
+        }
+        if menu.option("Credits", ctx) {
+            self.credits_subscene.active = true;
+        }
+
+        #[cfg(not(target_family = "wasm"))]
+        if menu.option("Quit", ctx) {
+            ctx.request_quit = true;
+        }
+
+        self.selected = menu.finish();
+        // vec![
+        //     MenuItem::new("Settings".into(), MenuOption::Settings),
+        //     MenuItem::new("Credits".into(), MenuOption::Credits),
+        //     #[cfg(not(target_family = "wasm"))]
+        //     MenuItem::new("Quit".into(), MenuOption::Quit),
+        // ]),
 
         draw_text(
             ctx,

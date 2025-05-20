@@ -1,6 +1,5 @@
 use macroquad::color::colors;
 
-use super::Scene;
 // use crate::audio::play_sfx;
 use super::TITLE_Y_INSET;
 // use super::VIRTUAL_HEIGHT;
@@ -19,20 +18,7 @@ impl Credits {
     pub fn new(_ctx: &Context) -> Self {
         Self { active: false }
     }
-}
-
-impl Scene for Credits {
-    fn update(&mut self, ctx: &mut Context) {
-        if ctx.input.actions.len() > 0 {
-            // Action::Confirm | Action::Cancel => {
-            ctx.audio.play_sfx(SoundFx::MenuCancel);
-            self.active = false;
-            // }
-            ctx.input.actions.clear();
-        }
-    }
-
-    fn draw(&mut self, ctx: &mut Context) {
+    pub fn draw(&mut self, ctx: &mut Context) {
         draw_text(
             ctx,
             "Credits",
@@ -67,5 +53,12 @@ impl Scene for Credits {
             Size::Small,
             colors::WHITE,
         );
+        if ctx.input.actions.len() > 0 {
+            // Action::Confirm | Action::Cancel => {
+            ctx.audio.play_sfx(SoundFx::MenuCancel);
+            self.active = false;
+            // }
+            ctx.input.actions.clear();
+        }
     }
 }

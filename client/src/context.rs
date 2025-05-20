@@ -1,12 +1,13 @@
 use macroquad::{
-    math::Vec2, miniquad::gl::glFlush, text::{draw_text_ex, load_ttf_font, Font, TextParams}, time::get_time, window::{next_frame, screen_height, screen_width}
+    math::Vec2,
+    text::{Font, load_ttf_font},
+    time::get_time,
+    window::{screen_height, screen_width},
 };
 
 use crate::{
-    assets_path::determine_asset_path,
-    audio,
-    input::InputContext,
-    scene::EScene,
+    assets_path::determine_asset_path, audio, input::InputContext, scene::EScene,
+    settings::GameSettings,
 };
 
 pub struct Context {
@@ -17,6 +18,7 @@ pub struct Context {
     pub audio: audio::AudioAtlas,
     pub input: InputContext,
     pub time: f64,
+    pub settings: GameSettings,
 }
 
 impl Context {
@@ -25,15 +27,22 @@ impl Context {
         let font = load_ttf_font(base_assets_path.join("editundo.ttf").to_str().unwrap())
             .await
             .unwrap();
+        let settings = GameSettings::load();
         Self {
             font: font,
             screen_size: Vec2::new(0.0, 0.0),
             switch_scene_to: None,
             request_quit: false,
             input: InputContext::new(),
-            audio: audio::AudioAtlas::new(&base_assets_path).await,
+            audio: audio::AudioAtlas::new(&base_assets_path, &settings).await,
             time: get_time(),
+            settings,
         }
+    }
+
+    pub fn save_settings(&mut self) {
+        self.settings.save();
+        self.audio.settings(&self.settings);
     }
 
     pub fn update(&mut self) {

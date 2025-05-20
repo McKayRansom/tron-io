@@ -1,7 +1,6 @@
 use macroquad::color::colors;
 use quad_net::quad_socket::client::QuadSocket;
-use tron_io_world::{client::WorldClient, ClientMsg, WorldState};
-use crate::online::WorldClientOnline;
+use tron_io_world::{ClientMsg, WorldState};
 
 use crate::{context::Context, text};
 
@@ -62,9 +61,7 @@ impl Lobby {
                     players: Vec::new(),
                 });
                 context.switch_scene_to =
-                Some(crate::scene::EScene::Gameplay(crate::scene::GameOptions {
-                    // client: WorldClient::new(Box::new(WorldClientOnline::new(
-                }));
+                Some(crate::scene::EScene::Gameplay(crate::scene::GameOptions::default()));
             }
         }
     }

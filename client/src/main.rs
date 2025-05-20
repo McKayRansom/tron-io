@@ -1,7 +1,7 @@
 use context::Context;
 use gameplay::Gameplay;
 use macroquad::{
-    audio::PlaySoundParams, color::{Color, BLACK, WHITE}, prelude::{collections::storage, coroutines::start_coroutine}, text::draw_text, time::get_time, window::{clear_background, next_frame, screen_height, screen_width, Conf}
+    color::{Color, BLACK, WHITE}, prelude::{collections::storage, coroutines::start_coroutine}, text::draw_text, time::get_time, window::{clear_background, next_frame, screen_height, screen_width, Conf}
 };
 use scene::{EScene, main_menu::MainMenu};
 
@@ -18,6 +18,7 @@ mod online;
 mod scene;
 mod text;
 mod ui;
+mod settings;
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 pub const PKG_NAME: &str = env!("CARGO_PKG_NAME");
@@ -99,11 +100,6 @@ async fn main() {
     load().await.unwrap();
     let mut ctx = storage::get_mut::<Context>();
 
-    ctx.audio
-        .play_sfx_ex(crate::audio::SoundFx::TitleMusic, PlaySoundParams {
-            looped: true,
-            volume: 1.0,
-        });
 
     let mut current_scene: Box<dyn scene::Scene> =
         Box::new(scene::main_menu::MainMenu::new(&mut ctx).await);

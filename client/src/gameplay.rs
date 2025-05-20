@@ -21,7 +21,7 @@ pub struct Gameplay {
 }
 
 impl Gameplay {
-    pub fn new(_context: &Context, gameoptions: GameOptions) -> Self {
+    pub fn new(_context: &Context, _gameoptions: GameOptions) -> Self {
         Self {
             input_map: HashMap::new(),
             // client: gameoptions.client,

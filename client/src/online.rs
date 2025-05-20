@@ -8,6 +8,7 @@ pub struct WorldClientOnline {
 }
 
 impl WorldClientOnline {
+    #[allow(unused)]
     pub fn new(socket: QuadSocket) -> Self {
         Self { socket }
     }

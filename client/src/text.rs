@@ -7,7 +7,7 @@ pub enum Size {
 }
 
 use macroquad::color::Color;
-use macroquad::text::{draw_text_ex, Font, TextDimensions, TextParams};
+use macroquad::text::{draw_text_ex, TextDimensions, TextParams};
 
 use crate::context::Context;
 
