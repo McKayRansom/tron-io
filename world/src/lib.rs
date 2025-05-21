@@ -105,8 +105,8 @@ impl GridSize {
     pub fn decr(&mut self) {
         *self = match self {
             GridSize::Small => GridSize::Small,
-            GridSize::Medium => GridSize::Medium,
-            GridSize::Large => GridSize::Large,
+            GridSize::Medium => GridSize::Small,
+            GridSize::Large => GridSize::Medium,
         }
     }
     pub fn dim(&self) -> (i16, i16) {
@@ -116,6 +116,31 @@ impl GridSize {
             GridSize::Large => (120, 120),
         }
 
+    }
+}
+
+#[derive(Debug, Default, Clone, Copy, DeBin, SerBin, PartialEq, Eq)]
+pub enum AiDifficulty {
+    #[default]
+    Easy,
+    Medium,
+    Hard,
+}
+
+impl AiDifficulty {
+    pub fn incr(&mut self)  {
+        *self = match self {
+            AiDifficulty::Easy => AiDifficulty::Medium,
+            AiDifficulty::Medium => AiDifficulty::Hard,
+            AiDifficulty::Hard => AiDifficulty::Hard,
+        }
+    }
+    pub fn decr(&mut self) {
+        *self = match self {
+            AiDifficulty::Easy => AiDifficulty::Easy,
+            AiDifficulty::Medium => AiDifficulty::Easy,
+            AiDifficulty::Hard => AiDifficulty::Medium,
+        }
     }
 }
 
@@ -130,6 +155,7 @@ pub struct GridOptions {
     pub grid_size: GridSize,
     pub teams: u8,
     pub players: u8,
+    pub ai_diff: AiDifficulty,
     // teams
     // boost? other powerups?
 }
@@ -140,6 +166,7 @@ impl Default for GridOptions {
             grid_size: Default::default(),
             teams: MIN_TEAMS,
             players: MIN_PLAYERS,
+            ai_diff: Default::default(),
         }
     }
 }

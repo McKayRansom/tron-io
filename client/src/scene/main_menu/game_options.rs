@@ -1,5 +1,5 @@
 use macroquad::{color::colors, math::vec2};
-use tron_io_world::{GridOptions, GridSize, MAX_TEAMS, MIN_PLAYERS, MIN_TEAMS};
+use tron_io_world::{AiDifficulty, GridOptions, GridSize, MAX_TEAMS, MIN_PLAYERS, MIN_TEAMS};
 
 use crate::{
     context::Context,
@@ -81,6 +81,16 @@ impl GameOptionsScene {
                     self.options.players -= 1;
                 }
             }
+            _ => {}
+        }
+
+        match menu.option_ex(
+            format!("<AI: {:?}>", self.options.ai_diff).as_str(),
+            ctx,
+        ) {
+            Some(MenuAction::Enter) => self.options.ai_diff = AiDifficulty::default(),
+            Some(MenuAction::Right) => self.options.ai_diff.incr(),
+            Some(MenuAction::Left) => self.options.ai_diff.decr(),
             _ => {}
         }
 

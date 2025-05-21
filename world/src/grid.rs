@@ -3,7 +3,7 @@ use std::hash::{DefaultHasher, Hash, Hasher};
 use bike::{Bike, BikeUpdate};
 use nanoserde::{DeBin, SerBin};
 
-use crate::{GridOptions, GridSize, client::WorldEvent};
+use crate::{client::WorldEvent, AiDifficulty, GridOptions, GridSize};
 
 pub mod bike;
 
@@ -158,6 +158,7 @@ pub struct Grid {
     pub occupied: Occupied,
     pub rng: quad_rand::RandGenerator,
     pub delay: Option<u32>, // delay after game end
+    pub ai_diff: AiDifficulty,
 }
 
 pub enum UpdateResult {
@@ -181,6 +182,7 @@ impl Grid {
             tick: 0,
             rng: quad_rand::RandGenerator::new(),
             delay: None,
+            ai_diff: options.ai_diff,
         }
     }
 

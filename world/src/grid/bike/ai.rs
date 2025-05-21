@@ -1,4 +1,4 @@
-use crate::grid::{Grid, Point};
+use crate::{grid::{Grid, Point}, AiDifficulty};
 
 use super::*;
 
@@ -61,6 +61,11 @@ impl Bike {
                 }
             }
         }
+
+        if grid.ai_diff == AiDifficulty::Easy {
+            return None;
+        }
+
         // these are the desired poses, could be improved LOL
         let cutoff_pos: Vec<(i16, i16)> = grid
             .bikes
@@ -123,7 +128,8 @@ impl Bike {
                 let boost = self.boost_time == 0
                     && path.len() < 15
                     && grid.rng.rand() < u32::MAX / 10
-                    && self.boost_count > 0;
+                    && self.boost_count > 0
+                    && grid.ai_diff == AiDifficulty::Hard;
                 if dir == self.dir && !boost {
                     return None;
                 }
