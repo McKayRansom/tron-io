@@ -16,6 +16,7 @@ pub enum SoundFx {
     GameLose,
     Turn,
     Boost,
+    Explosion,
     TitleMusic,
 }
 pub struct AudioAtlas {
@@ -71,6 +72,7 @@ impl AudioAtlas {
                 ),
                 (SoundFx::GameWin, load_sfx(base, "sfx/gameWin.wav").await),
                 (SoundFx::GameLose, load_sfx(base, "sfx/gameLose.wav").await),
+                (SoundFx::Explosion, load_sfx(base, "sfx/explosion.wav").await),
                 // (SoundFx::MenuCancel, load_sfx(base, "sfx/menuCancel.wav").await),
                 // (SoundFx::MenuCancel, load_sfx(base, "sfx/menuCancel.wav").await),
             ],
@@ -91,6 +93,13 @@ impl AudioAtlas {
 
     pub fn play_sfx(&mut self, effect: SoundFx) {
         self.play_sfx_ex(effect, PlaySoundParams::default());
+    }
+
+    pub fn play_sfx_vol(&mut self, effect: SoundFx, volume: f32) {
+        self.play_sfx_ex(effect, PlaySoundParams {
+            looped: false,
+            volume,
+        });
     }
 
     pub fn play_sfx_ex(&mut self, effect: SoundFx, mut params: PlaySoundParams) {

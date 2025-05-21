@@ -3,7 +3,7 @@ use std::hash::{DefaultHasher, Hash, Hasher};
 use bike::{Bike, BikeUpdate};
 use nanoserde::{DeBin, SerBin};
 
-use crate::{GridOptions, GridSize};
+use crate::{GridOptions, GridSize, client::WorldEvent};
 
 pub mod bike;
 
@@ -42,7 +42,8 @@ pub fn player_from_bike(options: &GridOptions, bike_id: BikeId) -> PlayerId {
 impl Cell {
     const BIKE_MASK: u8 = 0b10000000;
     const BOOST_MASK: u8 = 0b1000000;
-    const COLOR_MASK: u8 = 0b111111;
+    const SPLODE_MASK: u8 = 0b100000;
+    const COLOR_MASK: u8 = 0b11111;
 
     pub fn new() -> Self {
         Self { val: 0 }
@@ -73,9 +74,19 @@ impl Cell {
         }
     }
 
-    fn free(&mut self, id: u8) {
-        assert_eq!(self.val & Self::COLOR_MASK, id + 1);
+    pub fn explode(&mut self) {
+        self.val |= Self::SPLODE_MASK;
         self.val &= !Self::BIKE_MASK;
+    }
+
+    pub fn is_exploded(&self) -> bool {
+        self.val & Self::SPLODE_MASK != 0
+    }
+
+    // returns ok
+    fn free(&mut self, _id: u8) -> bool {
+        self.val &= !Self::BIKE_MASK;
+        self.val & Self::SPLODE_MASK == 0
     }
 }
 
@@ -108,16 +119,26 @@ impl Occupied {
         if pos.0 < 0 || pos.1 < 0 || pos.0 >= self.size.0 || pos.1 >= self.size.1 {
             return true;
         }
+        let cell = &mut self.occupied[pos.1 as usize][pos.0 as usize];
 
-        if self.occupied[pos.1 as usize][pos.0 as usize].is_occupied() {
+        if cell.is_occupied() {
+            if cell.is_bike() {
+                cell.explode();
+            }
             return true;
         }
-        self.occupied[pos.1 as usize][pos.0 as usize].occupy(id, true, boost);
+        cell.occupy(id, true, boost);
         return false;
     }
 
-    pub(crate) fn free(&mut self, pos: (i16, i16), id: u8) {
-        self.occupied[pos.1 as usize][pos.0 as usize].free(id);
+    pub(crate) fn free(&mut self, pos: (i16, i16), id: u8) -> bool {
+        self.occupied[pos.1 as usize][pos.0 as usize].free(id)
+    }
+    pub fn explose(&mut self, pos: (i16, i16)) {
+        if pos.0 < 0 || pos.1 < 0 || pos.0 >= self.size.0 || pos.1 >= self.size.1 {
+            return;
+        }
+        self.occupied[pos.1 as usize][pos.0 as usize].explode();
     }
 }
 
@@ -128,16 +149,7 @@ pub struct GridUpdateMsg {
     pub updates: Vec<BikeUpdate>,
 }
 
-// // tick 0 is an invalid Tick...
-// impl Default for GridUpdateMsg {
-//     fn default() -> Self {
-//         Self {
-//             tick: 1,
-//             hash: Default::default(),
-//             updates: Default::default(),
-//         }
-//     }
-// }
+const GAME_END_DELAY: u32 = 30;
 
 pub struct Grid {
     pub tick: u32,
@@ -145,6 +157,7 @@ pub struct Grid {
     pub bikes: Vec<Bike>,
     pub occupied: Occupied,
     pub rng: quad_rand::RandGenerator,
+    pub delay: Option<u32>, // delay after game end
 }
 
 pub enum UpdateResult {
@@ -167,6 +180,7 @@ impl Grid {
             occupied,
             tick: 0,
             rng: quad_rand::RandGenerator::new(),
+            delay: None,
         }
     }
 
@@ -174,12 +188,18 @@ impl Grid {
         self.bikes[bike_id as usize].get_color()
     }
 
-    pub fn update(&mut self) -> UpdateResult {
+    pub fn update(&mut self, mut events: Option<&mut Vec<WorldEvent>>) -> UpdateResult {
         let mut winning_team: Option<u8> = None;
         let mut winner = true;
         let mut hasher = DefaultHasher::new();
         for bike in self.bikes.iter_mut() {
             if bike.update(&mut self.occupied) {
+                if let Some(events) = &mut events {
+                    events.push(WorldEvent::BikeDeath(bike.id, bike.head));
+                }
+            }
+
+            if bike.alive {
                 if winning_team.is_some_and(|team| team != bike.team) {
                     winner = false;
                 } else {
@@ -192,10 +212,15 @@ impl Grid {
         }
         self.hash = hasher.finish();
         if winner {
-            UpdateResult::MatchOver(winning_team)
-        } else {
-            UpdateResult::InProgress
+            if self.delay.is_none() {
+                self.delay = Some(GAME_END_DELAY)
+            } else if self.delay.unwrap() > 0 {
+                self.delay = Some(self.delay.unwrap() - 1)
+            } else {
+                return UpdateResult::MatchOver(winning_team);
+            }
         }
+        UpdateResult::InProgress
     }
 
     pub fn size(&self) -> Point {
@@ -204,7 +229,11 @@ impl Grid {
 }
 
 impl Grid {
-    pub fn apply_updates(&mut self, updates: &GridUpdateMsg) -> UpdateResult {
+    pub fn apply_updates(
+        &mut self,
+        updates: &GridUpdateMsg,
+        events: Option<&mut Vec<WorldEvent>>,
+    ) -> UpdateResult {
         // tick and seed?
         for update in updates.updates.iter() {
             let bike = self.bikes.get_mut(update.id as usize).unwrap();
@@ -212,7 +241,7 @@ impl Grid {
         }
         if self.tick != updates.tick {
             self.tick = updates.tick;
-            self.update()
+            self.update(events)
         } else {
             UpdateResult::InProgress
         }

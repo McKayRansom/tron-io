@@ -71,6 +71,7 @@ impl Scene for Gameplay {
                     }
                     WorldState::RoundOver(winner) => {
                         if let Some(winner) = winner {
+                            // TODO: THIS IS WRONG!
                             if let Some(_player) = self.client.local_player(winner) {
                                 ctx.audio.play_sfx(SoundFx::RoundWin);
                             } else {
@@ -79,6 +80,7 @@ impl Scene for Gameplay {
                         }
                     }
                     WorldState::GameOver(winner) => {
+                        // TODO: THIS IS WRONG!
                         if let Some(_player) = self.client.local_player(winner) {
                             ctx.audio.play_sfx(SoundFx::GameWin);
                         } else {
@@ -103,6 +105,14 @@ impl Scene for Gameplay {
                                 });
                             }
                         }
+                    }
+                }
+                WorldEvent::BikeDeath(id, _pos) => {
+                    // TODO: spawn explosion effect?
+                    if let Some(_player) = self.client.local_player(id) {
+                        ctx.audio.play_sfx_vol(SoundFx::Explosion, 1.0);
+                    } else {
+                        ctx.audio.play_sfx_vol(SoundFx::Explosion, 0.5);
                     }
                 }
             }

@@ -7,6 +7,9 @@ use macroquad::{
 use tron_io_world::grid::{Cell, Grid, Point};
 
 pub fn cell_color(cell: &Cell) -> Color {
+    if cell.is_exploded() {
+        return macroquad::color::colors::WHITE;
+    }
     let mut color = crate::colors::get_color(cell.get_color());
     if cell.is_bike() {
         color.r += 0.3;

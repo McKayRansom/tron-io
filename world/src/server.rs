@@ -177,7 +177,7 @@ impl WorldServer {
                         }
                     }
 
-                    match self.grid.apply_updates(&self.last_update) {
+                    match self.grid.apply_updates(&self.last_update, None) {
                         UpdateResult::MatchOver(winner) => {
                             for player in self.players.iter_mut() {
                                 player.ready = false;

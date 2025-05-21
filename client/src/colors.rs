@@ -7,21 +7,22 @@ const PLAYER_COLOR_LOOKUP: &[(Color, &str)] = &[
     (colors::DARKBLUE, "Blue"),
     (colors::SKYBLUE, "Sky-Blue"),
     (colors::DARKPURPLE, "Dark-Purple"),
-    // TEAM 1; GREEN
-    (colors::GREEN, "Green"),
-    (colors::LIME, "Lime"),
-    (colors::DARKGREEN, "Dark-Green"),
-    (colors::GREEN, "Green"),
-    // TEAM 2: YELLOW
-    (colors::YELLOW, "Yellow"),
-    (colors::GOLD, "Yellow"),
-    (colors::ORANGE, "Orange"),
-    (colors::GOLD, "Yellow"),
-    // TEAM 3: RED
+    // TEAM 1: RED
     (colors::RED, "Red"),
     (colors::PINK, "Pink"),
     (colors::MAROON, "Maroon"),
     (colors::PURPLE, "Purple"),
+    // TEAM 2; GREEN
+    (colors::GREEN, "Green"),
+    (colors::LIME, "Lime"),
+    (colors::DARKGREEN, "Dark-Green"),
+    (colors::GREEN, "Green"),
+    // TEAM 3: YELLOW
+    (colors::YELLOW, "Yellow"),
+    (colors::GOLD, "Yellow"),
+    (colors::ORANGE, "Orange"),
+    (colors::GOLD, "Yellow"),
+    
     // UNUSED
     (colors::VIOLET, "Violet"),
     (colors::MAGENTA, "Magenta"),

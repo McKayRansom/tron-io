@@ -102,9 +102,9 @@ pub struct Bike {
     pub team: u8,
     pub player: u8,
     color: u8,
-    head: Point,
+    pub head: Point,
     dir: Point,
-    alive: bool,
+    pub alive: bool,
     speed: Ticks,
     pub boost_time: Ticks,
     pub boost_count: u8,
@@ -172,14 +172,14 @@ impl Bike {
         }
     }
 
-    /// returns true if the bike is alive
+    /// returns true if the bike just died
     pub fn update(&mut self, grid: &mut Occupied) -> bool {
         if !self.alive {
-            return self.alive;
+            return false;
         }
         if self.speed > 0 {
             self.speed -= 1;
-            return true;
+            return false;
         } else {
             self.speed = if self.boost_time > 0 {
                 self.boost_time -= 1;
@@ -188,16 +188,22 @@ impl Bike {
                 NORMAL_SPEED
             };
         }
-        grid.free(self.head, self.color);
+
+        // we were ramed :(
+        if !grid.free(self.head, self.color) {
+            self.alive = false;
+            return true;
+        }
 
         let new_head = (self.head.0 + self.dir.0, self.head.1 + self.dir.1);
 
         if grid.occupy(new_head, self.color, self.boost_time > 0) {
             self.alive = false;
-            false
+            grid.explose(self.head);
+            true
         } else {
             self.head = new_head;
-            true
+            false
         }
     }
 }

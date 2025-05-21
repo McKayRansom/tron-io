@@ -1,6 +1,6 @@
 use crate::{
     ClientPlayer, GridOptions, ServerPlayer,
-    grid::{Grid, bike::BikeUpdate},
+    grid::{Grid, Point, bike::BikeUpdate},
 };
 
 use super::{ClientConnection, ClientMsg, GridUpdateMsg, WorldState};
@@ -11,6 +11,7 @@ pub enum WorldEvent {
     LocalUpdate(BikeUpdate),
     ServerUpdate(GridUpdateMsg),
     GameState(WorldState),
+    BikeDeath(u8, Point),
 }
 
 pub struct WorldClient {
@@ -104,7 +105,9 @@ impl WorldClient {
                     } else {
                         log::warn!("Unknown player: {}", local_player_id.unwrap());
                     }
-                } else if local_player_id.is_some() && matches!(self.game_state, WorldState::Waiting) {
+                } else if local_player_id.is_some()
+                    && matches!(self.game_state, WorldState::Waiting)
+                {
                     if let Some(player) = self
                         .local_players
                         .get_mut(local_player_id.unwrap() as usize)
@@ -193,7 +196,7 @@ impl WorldClient {
                     if grid_update.tick == self.grid.tick {
                         // log::warn!("Got stale update");
                     } else {
-                        let _ = self.grid.apply_updates(&grid_update);
+                        let _ = self.grid.apply_updates(&grid_update, Some(&mut self.events));
 
                         if self.grid.hash != grid_update.hash {
                             log::error!(
