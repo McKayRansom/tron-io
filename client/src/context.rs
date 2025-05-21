@@ -51,5 +51,6 @@ impl Context {
         self.input.update();
         self.screen_size = Vec2::new(screen_width(), screen_height());
         self.time = get_time();
+        self.audio.update();
     }
 }

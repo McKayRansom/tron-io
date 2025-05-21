@@ -20,6 +20,9 @@ pub const DIRS_REV: &[Point] = &[RIGHT, LEFT, DOWN, UP];
 impl Bike {
     pub fn ai_update(&self, grid: &Grid) -> Option<BikeUpdate> {
         // let path_grid: Vec<Vec<f32>> = Vec::ne(&self, other);
+        if !self.alive {
+            return None;
+        }
 
         let new_head = (self.head.0 + self.dir.0, self.head.1 + self.dir.1);
         // OLD: miss wall logic, works find still when we can't reach enemies

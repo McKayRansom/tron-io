@@ -93,13 +93,13 @@ impl Scene for Gameplay {
                             if update.boost {
                                 ctx.audio.play_sfx_ex(SoundFx::Boost, PlaySoundParams {
                                     looped: false,
-                                    volume: 0.75,
+                                    volume: 0.5,
                                 });
                             } else {
                                 // turn SFX
                                 ctx.audio.play_sfx_ex(SoundFx::Turn, PlaySoundParams {
                                     looped: false,
-                                    volume: 0.75,
+                                    volume: 0.5,
                                 });
                             }
                         }

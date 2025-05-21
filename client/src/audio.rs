@@ -21,6 +21,7 @@ pub enum SoundFx {
 pub struct AudioAtlas {
     pub sound_volume: f32,
     pub sfx: Vec<(SoundFx, Sound)>,
+    last_sound: Option<SoundFx>,
 }
 
 async fn load_sfx(base_path: &Path, path: &str) -> Sound {
@@ -73,6 +74,7 @@ impl AudioAtlas {
                 // (SoundFx::MenuCancel, load_sfx(base, "sfx/menuCancel.wav").await),
                 // (SoundFx::MenuCancel, load_sfx(base, "sfx/menuCancel.wav").await),
             ],
+            last_sound: None,
         };
 
         this.play_sfx_ex(crate::audio::SoundFx::TitleMusic, PlaySoundParams {
@@ -83,14 +85,20 @@ impl AudioAtlas {
         this
     }
 
-    pub fn play_sfx(&self, effect: SoundFx) {
+    pub fn update(&mut self) {
+        self.last_sound = None;
+    }
+
+    pub fn play_sfx(&mut self, effect: SoundFx) {
         self.play_sfx_ex(effect, PlaySoundParams::default());
     }
 
-    pub fn play_sfx_ex(&self, effect: SoundFx, params: PlaySoundParams) {
-        // if ctx.settings.is_muted() {
-        //     return;
-        // }
+    pub fn play_sfx_ex(&mut self, effect: SoundFx, mut params: PlaySoundParams) {
+        if self.sound_volume == 0.0 || Some(effect) == self.last_sound {
+            return;
+        }
+        self.last_sound = Some(effect);
+        params.volume *= self.sound_volume;
         for sfx in &self.sfx {
             if sfx.0 == effect {
                 macroquad::audio::play_sound(&sfx.1, params);

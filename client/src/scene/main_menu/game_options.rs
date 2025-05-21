@@ -84,6 +84,10 @@ impl GameOptionsScene {
             _ => {}
         }
 
+        if menu.option("Back", ctx) {
+            self.active = false;
+        }
+
 
         self.selected = menu.finish();
     }
