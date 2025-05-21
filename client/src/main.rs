@@ -39,7 +39,7 @@ pub async fn load() -> Result<(), macroquad::Error> {
         while !resources_loading.is_done() {
             clear_background(BLACK);
             let text = format!(
-                "Loading {}",
+                "Booting {}",
                 ".".repeat(((get_time() * 2.) as usize) % 4)
             );
             draw_text(
@@ -105,8 +105,6 @@ async fn main() {
         Box::new(scene::main_menu::MainMenu::new(&mut ctx).await);
 
     loop {
-        // clear_background(colors::BLACK);
-
         clear_background(BACKGROUND_COLOR);
         ctx.update();
 
