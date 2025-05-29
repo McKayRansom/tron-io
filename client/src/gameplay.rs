@@ -147,7 +147,7 @@ impl Scene for Gameplay {
                                     .boost_count as usize
                             )
                         ),
-                        _ => format!("P{} ready: {} ", player.name, player.ready),
+                        _ => format!("{} ready: {} ", player.name, player.ready),
                         // WorldState::RoundOver(_) => todo!(),
                         // WorldState::GameOver(_) => todo!(),
                     },
@@ -158,7 +158,7 @@ impl Scene for Gameplay {
                     ),
                 )
             } else if self.client.game_state == WorldState::Waiting {
-                ("[ENTER/LSHIFT/A] to join".into(), colors::WHITE)
+                ("[A/ENTER/LSHIFT] to join".into(), colors::WHITE)
             } else {
                 continue;
             };
@@ -192,7 +192,7 @@ impl Scene for Gameplay {
                     r: 0.,
                     g: 0.,
                     b: 0.,
-                    a: 0.4,
+                    a: 0.7,
                 },
             );
             let mut color = colors::WHITE;
@@ -210,8 +210,8 @@ impl Scene for Gameplay {
                     "Press [enter] to reboot or [delete] to exit.".into(),
                 ),
                 WorldState::Waiting => (
-                    "Waiting for players...".into(),
-                    "Press [enter] to start.".into(),
+                    "Game Lobby".into(),
+                    "Press [A/ENTER/LSHIFT] to join".into(),
                 ),
                 WorldState::RoundOver(winner) => (
                     if let Some(winner) = winner {

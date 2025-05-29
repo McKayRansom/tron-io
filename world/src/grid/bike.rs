@@ -79,8 +79,8 @@ fn bike_pos(team: u8, player: u8, size: Point) -> (Point, Point) {
         0 => (0, 0),
         1 => add(multiply(rotate_right(dir), 3), invert_dir(dir)),
         2 => add(multiply(rotate_left(dir), 3), invert_dir(dir)),
-        3 => add(multiply(rotate_right(dir), 5), multiply(invert_dir(dir), 3)),
-        4 => add(multiply(rotate_left(dir), 5), multiply(invert_dir(dir), 3)),
+        3 => add(multiply(rotate_right(dir), 6), multiply(invert_dir(dir), 3)),
+        4 => add(multiply(rotate_left(dir), 6), multiply(invert_dir(dir), 3)),
         _ => unimplemented!(),
     };
 
