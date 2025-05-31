@@ -262,11 +262,12 @@ impl Grid {
         for update in updates.updates.iter() {
             let bike = self.bikes.get_mut(update.id as usize).unwrap();
             bike.apply_update(update);
-            if update.boost {
+            if update.boost && bike.length > 0 {
                 if let Some(bullet) =
                     Bullet::new(&mut self.occupied, bike.head, bike.dir, bike.get_color())
                 {
                     self.bullets.push(bullet);
+                    bike.length -= 1;
                 }
             }
         }

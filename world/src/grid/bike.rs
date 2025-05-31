@@ -1,3 +1,5 @@
+use std::collections::VecDeque;
+
 use nanoserde::{DeBin, SerBin};
 
 use crate::{
@@ -112,6 +114,8 @@ pub struct Bike {
     pub boost_time: Ticks,
     pub boost_count: u8,
 
+    pub length: u8,
+    pub segments: VecDeque<Point>,
     // try shooting
 }
 
@@ -131,6 +135,8 @@ impl Bike {
             speed: 0,
             boost_time: 0,
             boost_count: BOOST_COUNT,
+            length: 16,
+            segments: VecDeque::new(),
         }
     }
 
@@ -205,10 +211,19 @@ impl Bike {
 
         if grid.occupy(new_head, self.color, false) {
             self.alive = false;
-            // explode the old head so it's clear we died 
+            // explode the old head so it's clear we died
             grid.explose(self.head);
             true
         } else {
+            // if self.segments.len() < self.length as usize {
+            self.segments.push_front(self.head);
+            // log::info!("Pushing segment {:?}", self.head);
+            while self.segments.len() > self.length as usize {
+                if let Some(end) = self.segments.pop_back() {
+                    // log::info!("Poping segment {:?}", end);
+                    grid.free_for_read(end);
+                }
+            }
             self.head = new_head;
             false
         }
