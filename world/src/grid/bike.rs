@@ -1,6 +1,9 @@
 use nanoserde::{DeBin, SerBin};
 
-use crate::{grid::{team_to_color, Point}, Action};
+use crate::{
+    Action,
+    grid::{Point, team_to_color},
+};
 
 use super::Occupied;
 
@@ -103,13 +106,14 @@ pub struct Bike {
     pub player: u8,
     color: u8,
     pub head: Point,
-    dir: Point,
+    pub dir: Point,
     pub alive: bool,
     speed: Ticks,
     pub boost_time: Ticks,
     pub boost_count: u8,
-}
 
+    // try shooting
+}
 
 impl Bike {
     pub fn new(grid: &mut Occupied, id: u8, team: u8, player: u8) -> Self {
@@ -166,10 +170,10 @@ impl Bike {
 
     pub fn apply_update(&mut self, update: &BikeUpdate) {
         self.dir = update.dir;
-        if update.boost && self.boost_count > 0 && self.boost_time == 0 {
-            self.boost_time = BOOST_TIME;
-            self.boost_count -= 1;
-        }
+        // if update.boost && self.boost_count > 0 && self.boost_time == 0 {
+        //     self.boost_time = BOOST_TIME;
+        //     self.boost_count -= 1;
+        // }
     }
 
     /// returns true if the bike just died
@@ -183,7 +187,9 @@ impl Bike {
         } else {
             self.speed = if self.boost_time > 0 {
                 self.boost_time -= 1;
-                BOOST_SPEED
+                // BOOST_SPEED
+                // hijack boosting to shoot!
+                NORMAL_SPEED
             } else {
                 NORMAL_SPEED
             };
@@ -197,8 +203,9 @@ impl Bike {
 
         let new_head = (self.head.0 + self.dir.0, self.head.1 + self.dir.1);
 
-        if grid.occupy(new_head, self.color, self.boost_time > 0) {
+        if grid.occupy(new_head, self.color, false) {
             self.alive = false;
+            // explode the old head so it's clear we died 
             grid.explose(self.head);
             true
         } else {

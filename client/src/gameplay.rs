@@ -57,10 +57,12 @@ impl Scene for Gameplay {
                 WorldEvent::PlayerReady => ctx.audio.play_sfx(SoundFx::MenuSelect),
                 WorldEvent::LocalUpdate(bike_update) => {
                     if bike_update.boost {
-                        ctx.audio.play_sfx(SoundFx::Boost);
-                    } else {
-                        // turn SFX
+                        // ctx.audio.play_sfx(SoundFx::Boost);
                         ctx.audio.play_sfx(SoundFx::Turn);
+                    } else {
+                        // THIS IS SUPER ANNOYING
+                        // turn SFX
+                        // ctx.audio.play_sfx(SoundFx::Turn);
                     }
                 }
                 WorldEvent::GameState(world_state) => match world_state {
@@ -93,16 +95,16 @@ impl Scene for Gameplay {
                         // only do these for remote players, local players are played immedialty
                         if self.client.local_player(update.id).is_none() {
                             if update.boost {
-                                ctx.audio.play_sfx_ex(SoundFx::Boost, PlaySoundParams {
+                                ctx.audio.play_sfx_ex(SoundFx::Turn, PlaySoundParams {
                                     looped: false,
                                     volume: 0.5,
                                 });
                             } else {
                                 // turn SFX
-                                ctx.audio.play_sfx_ex(SoundFx::Turn, PlaySoundParams {
-                                    looped: false,
-                                    volume: 0.5,
-                                });
+                                // ctx.audio.play_sfx_ex(SoundFx::Turn, PlaySoundParams {
+                                //     looped: false,
+                                //     volume: 0.5,
+                                // });
                             }
                         }
                     }

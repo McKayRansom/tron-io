@@ -3,11 +3,15 @@ use std::hash::{DefaultHasher, Hash, Hasher};
 use bike::{Bike, BikeUpdate};
 use nanoserde::{DeBin, SerBin};
 
-use crate::{client::WorldEvent, AiDifficulty, GridOptions, GridSize};
+use crate::{AiDifficulty, GridOptions, GridSize, client::WorldEvent};
 
 pub mod bike;
 
 pub type Point = (i16, i16);
+
+pub fn point_add(a: Point, b: Point) -> Point {
+    (a.0 + b.0, a.1 + b.1)
+}
 
 #[derive(Clone)]
 pub struct Cell {
@@ -88,6 +92,10 @@ impl Cell {
         self.val &= !Self::BIKE_MASK;
         self.val & Self::SPLODE_MASK == 0
     }
+
+    fn free_for_real(&mut self) {
+        self.val = 0;
+    }
 }
 
 pub struct Occupied {
@@ -140,6 +148,13 @@ impl Occupied {
         }
         self.occupied[pos.1 as usize][pos.0 as usize].explode();
     }
+
+    fn free_for_read(&mut self, pos: (i16, i16)) {
+        if pos.0 < 0 || pos.1 < 0 || pos.0 >= self.size.0 || pos.1 >= self.size.1 {
+            return;
+        }
+        self.occupied[pos.1 as usize][pos.0 as usize].free_for_real();
+    }
 }
 
 #[derive(DeBin, SerBin, Debug, Clone, Default)]
@@ -159,6 +174,7 @@ pub struct Grid {
     pub rng: quad_rand::RandGenerator,
     pub delay: Option<u32>, // delay after game end
     pub ai_diff: AiDifficulty,
+    pub bullets: Vec<Bullet>,
 }
 
 pub enum UpdateResult {
@@ -183,6 +199,7 @@ impl Grid {
             rng: quad_rand::RandGenerator::new(),
             delay: None,
             ai_diff: options.ai_diff,
+            bullets: Vec::new(),
         }
     }
 
@@ -191,9 +208,14 @@ impl Grid {
     }
 
     pub fn update(&mut self, mut events: Option<&mut Vec<WorldEvent>>) -> UpdateResult {
+        //update bullets first so they can get out of the way of the shooting bike
+        self.bullets
+            .retain_mut(|bullet| bullet.update(&mut self.occupied));
+
         let mut winning_team: Option<u8> = None;
         let mut winner = true;
         let mut hasher = DefaultHasher::new();
+
         for bike in self.bikes.iter_mut() {
             if bike.update(&mut self.occupied) {
                 if let Some(events) = &mut events {
@@ -240,12 +262,56 @@ impl Grid {
         for update in updates.updates.iter() {
             let bike = self.bikes.get_mut(update.id as usize).unwrap();
             bike.apply_update(update);
+            if update.boost {
+                if let Some(bullet) =
+                    Bullet::new(&mut self.occupied, bike.head, bike.dir, bike.get_color())
+                {
+                    self.bullets.push(bullet);
+                }
+            }
         }
         if self.tick != updates.tick {
             self.tick = updates.tick;
             self.update(events)
         } else {
             UpdateResult::InProgress
+        }
+    }
+}
+
+pub struct Bullet {
+    pos: Point,
+    dir: Point,
+    color: u8,
+}
+
+impl Bullet {
+    pub fn new(occupied: &mut Occupied, from_pos: Point, dir: Point, color: u8) -> Option<Self> {
+        let mut bullet = Bullet {
+            pos: from_pos,
+            dir,
+            color,
+        };
+        bullet.pos = point_add(bullet.pos, bullet.dir);
+        if occupied.occupy(bullet.pos, bullet.color, true) {
+            // laser hit something?
+            occupied.free_for_read(bullet.pos);
+            return None;
+        } else {
+            return Some(bullet);
+        }
+    }
+
+    pub fn update(&mut self, occupied: &mut Occupied) -> bool {
+        // self.laser = self.head + self.dir + self.dir;
+        occupied.free_for_read(self.pos);
+        self.pos = point_add(self.pos, self.dir);
+        if occupied.occupy(self.pos, self.color, true) {
+            // laser hit something?
+            occupied.free_for_read(self.pos);
+            false
+        } else {
+            true
         }
     }
 }
