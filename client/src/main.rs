@@ -1,7 +1,11 @@
 use context::Context;
 use gameplay::Gameplay;
 use macroquad::{
-    color::{Color, BLACK, WHITE}, prelude::{collections::storage, coroutines::start_coroutine}, text::draw_text, time::get_time, window::{clear_background, next_frame, screen_height, screen_width, Conf}
+    color::{BLACK, Color, WHITE},
+    prelude::{collections::storage, coroutines::start_coroutine},
+    text::draw_text,
+    time::get_time,
+    window::{Conf, clear_background, next_frame, screen_height, screen_width},
 };
 use scene::{EScene, main_menu::MainMenu};
 
@@ -16,9 +20,9 @@ mod draw;
 mod input;
 mod online;
 mod scene;
+mod settings;
 mod text;
 mod ui;
-mod settings;
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 pub const PKG_NAME: &str = env!("CARGO_PKG_NAME");
@@ -31,29 +35,26 @@ pub const BACKGROUND_COLOR: Color = Color {
 };
 
 pub async fn load() -> Result<(), macroquad::Error> {
-        let resources_loading = start_coroutine(async move {
-            let ctx = Context::default().await;
-            storage::store(ctx);
-        });
+    let resources_loading = start_coroutine(async move {
+        let ctx = Context::default().await;
+        storage::store(ctx);
+    });
 
-        while !resources_loading.is_done() {
-            clear_background(BLACK);
-            let text = format!(
-                "Booting {}",
-                ".".repeat(((get_time() * 2.) as usize) % 4)
-            );
-            draw_text(
-                &text,
-                screen_width() / 2. - 160.,
-                screen_height() / 2.,
-                40.,
-                WHITE,
-            );
-            next_frame().await;
-        }
-
-        Ok(())
+    while !resources_loading.is_done() {
+        clear_background(BLACK);
+        let text = format!("Booting {}", ".".repeat(((get_time() * 2.) as usize) % 4));
+        draw_text(
+            &text,
+            screen_width() / 2. - 160.,
+            screen_height() / 2.,
+            40.,
+            WHITE,
+        );
+        next_frame().await;
     }
+
+    Ok(())
+}
 
 fn window_conf() -> Conf {
     Conf {
@@ -99,7 +100,6 @@ async fn main() {
     // loading assets can take a while
     load().await.unwrap();
     let mut ctx = storage::get_mut::<Context>();
-
 
     let mut current_scene: Box<dyn scene::Scene> =
         Box::new(scene::main_menu::MainMenu::new(&mut ctx).await);

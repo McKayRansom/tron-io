@@ -22,6 +22,7 @@ pub struct Context {
 }
 
 impl Context {
+
     pub async fn default() -> Self {
         let base_assets_path = determine_asset_path();
         let font = load_ttf_font(base_assets_path.join("editundo.ttf").to_str().unwrap())
