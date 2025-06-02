@@ -135,7 +135,7 @@ impl Bike {
             speed: 0,
             boost_time: 0,
             boost_count: BOOST_COUNT,
-            length: 16,
+            length: 64,
             segments: VecDeque::new(),
         }
     }
@@ -215,15 +215,14 @@ impl Bike {
             grid.explose(self.head);
             true
         } else {
-            // if self.segments.len() < self.length as usize {
-            self.segments.push_front(self.head);
+            // self.segments.push_front(self.head);
             // log::info!("Pushing segment {:?}", self.head);
-            while self.segments.len() > self.length as usize {
-                if let Some(end) = self.segments.pop_back() {
-                    // log::info!("Poping segment {:?}", end);
-                    grid.free_for_read(end);
-                }
-            }
+            // while self.segments.len() > self.length as usize {
+            //     if let Some(end) = self.segments.pop_back() {
+            //         // log::info!("Poping segment {:?}", end);
+            //         grid.free_for_read(end);
+            //     }
+            // }
             self.head = new_head;
             false
         }
