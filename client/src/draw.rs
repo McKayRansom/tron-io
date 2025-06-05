@@ -37,9 +37,11 @@ pub struct GridDrawInfo {
 
 const MARGIN: f32 = 10.;
 
+const VIEWPORT_SIZE: f32 = 1024.;
+
 impl GridDrawInfo {
     pub fn new() -> Self {
-        let game_size = screen_width().min(screen_height()) - MARGIN * 2.;
+        let game_size = VIEWPORT_SIZE - MARGIN * 2.;
         let offset_x = (screen_width() - game_size) / 2.;
         let offset_y = (screen_height() - game_size) / 2.;
         let sq_size = game_size / SQUARES as f32;
@@ -72,11 +74,11 @@ pub fn draw_grid(grid: &Grid) {
 
     let draw_info = GridDrawInfo::new();
 
-    let viewport_size = 1024.;
+    let view_area = screen_height().min(screen_width());
 
     let camera = Camera2D {
-        zoom: vec2(2.0 / viewport_size, 2.0 / viewport_size),
-        target: vec2(viewport_size / 2., viewport_size / 2.),
+        zoom: vec2(2.0 / VIEWPORT_SIZE, 2.0 / VIEWPORT_SIZE),
+        target: vec2(VIEWPORT_SIZE / 2., VIEWPORT_SIZE / 2.),
         render_target: Some(storage::get::<RenderTarget>().clone()),
         ..Default::default()
     };
@@ -151,11 +153,11 @@ pub fn draw_grid(grid: &Grid) {
     gl_use_material(&material);
     draw_texture_ex(
         &camera.render_target.unwrap().texture,
-        (screen_width() - viewport_size) / 2.,
-        (screen_height() - viewport_size) / 2.,
+        (screen_width() - view_area) / 2.,
+        (screen_height() - view_area) / 2.,
         WHITE,
         DrawTextureParams {
-            // dest_size: Some(vec2(screen_width(), screen_height())),
+            dest_size: Some(vec2(view_area, view_area)),
             ..Default::default()
         },
     );
