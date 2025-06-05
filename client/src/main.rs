@@ -25,9 +25,9 @@ pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 pub const PKG_NAME: &str = env!("CARGO_PKG_NAME");
 
 pub const BACKGROUND_COLOR: Color = Color {
-    r: 0.17,
-    g: 0.17,
-    b: 0.17,
+    r: 0.07,
+    g: 0.07,
+    b: 0.07,
     a: 1.0,
 };
 
@@ -109,8 +109,8 @@ async fn main() {
 
     let material = load_material(
         ShaderSource::Glsl {
-            // vertex: GLOW_VERTEX_SHADER,
             vertex: CRT_VERTEX_SHADER,
+            // vertex: CRT_VERTEX_SHADER,
             fragment: CRT_FRAGMENT_SHADER,
         },
         Default::default(),
@@ -337,21 +337,57 @@ void DrawScanline( inout vec3 color, vec2 uv )
 {
     float iTime = 0.1;
         // float scanline 	= clamp( 0.95 + 0.05 * cos( 3.14 * ( uv.y + 0.008 * iTime ) * 240.0 * 1.0 ), 0.0, 1.0 );
-    float scanline 	= 0.85 + 0.15 * clamp( 1.5 * cos( 3.14 * uv.y * 720.0 / 2.0 * 1.0 ), 0.0, 1.0 );
-    float grille 	= 0.85 + 0.15 * clamp( 1.5 * cos( 3.14 * uv.x * 1280.0 / 2.0 * 1.0 ), 0.0, 1.0 );
+    float scanline 	= 0.85 + 0.15 * clamp( 1.5 * cos( 3.14 * uv.y * 1024.0 / 2.0 * 1.0 ), 0.0, 1.0 );
+    float grille 	= 0.85 + 0.15 * clamp( 1.5 * cos( 3.14 * uv.x * 1024.0 / 2.0 * 1.0 ), 0.0, 1.0 );
     // float scanline 	= clamp( 0.95 + 0.05 * cos( 3.14 * ( uv.y + 0.008 * iTime ) * 240.0 * 1.0 ), 0.0, 1.0 );
     // float grille 	= 0.85 + 0.15 * clamp( 1.5 * cos( 3.14 * uv.x * 640.0 * 1.0 ), 0.0, 1.0 );
     color *= scanline * grille * 1.2;
 }
 
+// TODO: I guessed at const is that a real thing
+const float glow_threshold = .5;
+const float glow_distance = 0.0010;
+
 void main() {
-    vec2 crtUV = CRTCurveUV(uv);
+    // vec2 crtUV = CRTCurveUV(uv);
     vec3 res = texture2D(Texture, uv).rgb * color.rgb;
-    if (crtUV.x < 0.0 || crtUV.x > 1.0 || crtUV.y < 0.0 || crtUV.y > 1.0)
-    {
-        res = vec3(0.0, 0.0, 0.0);
+
+    // GLOW EFFECT (SHITTY)
+    if (res.r <= glow_threshold && res.g <= glow_threshold && res.b <= glow_threshold) {
+        vec4 sum = vec4(0.0, 0.0, 0.0, 0.0);
+        for (int n = 0; n < 9; ++n) {
+            // uv_y = (tex_coord.y * size.y) + (glow_size * float(n - 4.5));
+            // float h_sum = 0.0;
+            vec4 h_sum = vec4(0.0, 0.0, 0.0, 0.0);
+            h_sum += color * texture2D(Texture, uv + vec2(-glow_distance, -glow_distance) * vec2(n, n));
+            h_sum += color * texture2D(Texture, uv + vec2(-glow_distance, 0.0) * vec2(n, n));
+            h_sum += color * texture2D(Texture, uv + vec2(-glow_distance, glow_distance) * vec2(n, n));
+            h_sum += color * texture2D(Texture, uv + vec2(0.0, glow_distance) * vec2(n, n));
+            h_sum += color * texture2D(Texture, uv + vec2(glow_distance, glow_distance) * vec2(n, n));
+            h_sum += color * texture2D(Texture, uv + vec2(glow_distance, 0.0) * vec2(n, n));
+            h_sum += color * texture2D(Texture, uv + vec2(glow_distance, -glow_distance) * vec2(n, n));
+            h_sum += color * texture2D(Texture, uv + vec2(0.0, -glow_distance) * vec2(n, n));
+            // sum += vec4(1.0, 0.0, 0.0, 0.0);
+
+            // h_sum += texelFetch(t0, ivec2(uv_x - (4.0 * glow_size), uv_y), 0).a;
+            // h_sum += texelFetch(t0, ivec2(uv_x - (3.0 * glow_size), uv_y), 0).a;
+            // h_sum += texelFetch(t0, ivec2(uv_x - (2.0 * glow_size), uv_y), 0).a;
+            // h_sum += texelFetch(t0, ivec2(uv_x - glow_size, uv_y), 0).a;
+            // h_sum += texelFetch(t0, ivec2(uv_x, uv_y), 0).a;
+            // h_sum += texelFetch(t0, ivec2(uv_x + glow_size, uv_y), 0).a;
+            // h_sum += texelFetch(t0, ivec2(uv_x + (2.0 * glow_size), uv_y), 0).a;
+            // h_sum += texelFetch(t0, ivec2(uv_x + (3.0 * glow_size), uv_y), 0).a;
+            // h_sum += texelFetch(t0, ivec2(uv_x + (4.0 * glow_size), uv_y), 0).a;
+            sum += h_sum / 8.0;
+        }
+        res = sum.rgb / 9.0;
     }
-    DrawVignette(res, crtUV);
+
+    // if (crtUV.x < 0.0 || crtUV.x > 1.0 || crtUV.y < 0.0 || crtUV.y > 1.0)
+    // {
+    //     res = vec3(0.0, 0.0, 0.0);
+    // }
+    // DrawVignette(res, crtUV);
     DrawScanline(res, uv);
     gl_FragColor = vec4(res, 1.0);
 
