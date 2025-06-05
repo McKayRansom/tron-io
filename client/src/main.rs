@@ -1,9 +1,15 @@
 use context::Context;
 use gameplay::Gameplay;
 use macroquad::{
-    audio::PlaySoundParams, camera::{set_camera, set_default_camera, Camera2D}, color::{Color, BLACK, WHITE}, math::vec2, prelude::{
-        collections::storage, coroutines::start_coroutine, gl_use_default_material, gl_use_material, load_material, ShaderSource
-    }, text::draw_text, texture::{draw_texture_ex, render_target, DrawTextureParams}, time::get_time, window::{clear_background, next_frame, screen_height, screen_width, Conf}
+    audio::PlaySoundParams,
+    color::{Color, BLACK, WHITE},
+    prelude::{
+        collections::storage, coroutines::start_coroutine, load_material, ShaderSource
+    },
+    text::draw_text,
+    texture::{render_target_ex, RenderTargetParams},
+    time::get_time,
+    window::{clear_background, next_frame, screen_height, screen_width, Conf},
 };
 use scene::{EScene, main_menu::MainMenu};
 
@@ -107,6 +113,8 @@ async fn main() {
     let mut current_scene: Box<dyn scene::Scene> =
         Box::new(scene::main_menu::MainMenu::new(&mut ctx).await);
 
+    // panic!();
+
     let material = load_material(
         ShaderSource::Glsl {
             vertex: CRT_VERTEX_SHADER,
@@ -119,18 +127,28 @@ async fn main() {
 
     storage::store(material);
 
-    // storage::store(material);
+    let viewport_size = 1024.;
 
-    let render_target = render_target(screen_width() as u32, screen_height() as u32);
-    render_target
-        .texture
-        .set_filter(macroquad::texture::FilterMode::Nearest);
+    let render_target = render_target_ex(
+        viewport_size as u32,
+        viewport_size as u32,
+        RenderTargetParams {
+            sample_count: 1,
+            depth: false,
+        },
+    );
+
+    storage::store(render_target);
+
+    // let render_target = render_target(screen_width() as u32, screen_height() as u32);
+    // render_target
+    //     .texture
+    //     .set_filter(macroquad::texture::FilterMode::Nearest);
 
     loop {
         // clear_background(BLACK);
 
         clear_background(BACKGROUND_COLOR);
-        
 
         ctx.update();
 
@@ -150,16 +168,16 @@ async fn main() {
                 EScene::Gameplay(game_options) => Box::new(Gameplay::new(&mut ctx, game_options)),
             };
         }
-        
+
         next_frame().await;
     }
 }
 
 /*
  * Macroquad seems to know about 'Model' and 'Projection' uniforms
- * 
+ *
  * and it creates position, texcoord, color0, normal at some point as well
- * 
+ *
  */
 pub const VERTEX: &str = r#"#version 100
     attribute vec3 position;
@@ -305,7 +323,6 @@ void main() {
 
 "#;
 
-
 const CRT_FRAGMENT_SHADER: &'static str = r#"#version 100
 precision lowp float;
 
@@ -393,7 +410,6 @@ void main() {
 
 }
 "#;
-
 
 // NOTE: CRT Shader looks really good on the bikes...
 const CRT_FRAGMENT_SHADER_MODIFIED: &'static str = r#"#version 100

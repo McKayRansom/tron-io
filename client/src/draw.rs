@@ -1,10 +1,12 @@
 use macroquad::{
-    camera::{Camera2D, set_camera, set_default_camera},
+    camera::{set_camera, set_default_camera, Camera2D},
     color::{Color, WHITE},
-    math::{Rect, Vec2, vec2},
+    math::{vec2, Rect, Vec2},
     prelude::{collections::storage, gl_use_default_material, gl_use_material},
     shapes::{draw_line, draw_rectangle, draw_rectangle_lines},
-    texture::{DrawTextureParams, draw_texture_ex, render_target},
+    texture::{
+        draw_texture_ex, DrawTextureParams, RenderTarget
+    },
     window::{clear_background, screen_height, screen_width},
 };
 use tron_io_world::grid::{Cell, Grid, Point, SQUARES};
@@ -51,7 +53,10 @@ impl GridDrawInfo {
     }
 
     pub fn grid_to_screen(&self, pos: Point) -> Vec2 {
-        Vec2::new(MARGIN + pos.0 as f32 * self.sq_size, MARGIN + pos.1 as f32 * self.sq_size)
+        Vec2::new(
+            MARGIN + pos.0 as f32 * self.sq_size,
+            MARGIN + pos.1 as f32 * self.sq_size,
+        )
     }
     // pub fn screen_to_grid(&self, pos: Vec2) -> Point {
     //     let x = ((pos.x - self.offset_x) / self.sq_size).round() as i16;
@@ -67,15 +72,12 @@ pub fn draw_grid(grid: &Grid) {
 
     let draw_info = GridDrawInfo::new();
 
-    let viewport_size =  screen_width().min(screen_height());
+    let viewport_size = 1024.;
 
     let camera = Camera2D {
-        zoom: vec2(2.0 / viewport_size,  2.0 / viewport_size),
+        zoom: vec2(2.0 / viewport_size, 2.0 / viewport_size),
         target: vec2(viewport_size / 2., viewport_size / 2.),
-        render_target: Some(render_target(
-            viewport_size as u32,
-            viewport_size as u32,
-        )),
+        render_target: Some(storage::get::<RenderTarget>().clone()),
         ..Default::default()
     };
     set_camera(&camera);
