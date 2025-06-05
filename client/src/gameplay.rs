@@ -122,6 +122,8 @@ impl Scene for Gameplay {
     }
 
     fn draw(&mut self, ctx: &mut Context) {
+        
+
         draw_grid(&self.client.grid);
 
         // draw players in corners
