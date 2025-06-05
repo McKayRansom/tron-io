@@ -25,9 +25,9 @@ pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 pub const PKG_NAME: &str = env!("CARGO_PKG_NAME");
 
 pub const BACKGROUND_COLOR: Color = Color {
-    r: 0.07,
-    g: 0.07,
-    b: 0.07,
+    r: 0.17,
+    g: 0.17,
+    b: 0.17,
     a: 1.0,
 };
 
@@ -117,6 +117,8 @@ async fn main() {
     )
     .unwrap();
 
+    storage::store(material);
+
     // storage::store(material);
 
     let render_target = render_target(screen_width() as u32, screen_height() as u32);
@@ -127,14 +129,8 @@ async fn main() {
     loop {
         // clear_background(BLACK);
 
-        // clear_background(BACKGROUND_COLOR);
-        set_camera(&Camera2D {
-            zoom: vec2(0.0015, 0.0025),
-            target: vec2(screen_width() / 2., screen_height() / 2.),
-            render_target: Some(render_target.clone()),
-            ..Default::default()
-        });
-        clear_background(BLACK);
+        clear_background(BACKGROUND_COLOR);
+        
 
         ctx.update();
 
@@ -154,14 +150,7 @@ async fn main() {
                 EScene::Gameplay(game_options) => Box::new(Gameplay::new(&mut ctx, game_options)),
             };
         }
-        set_default_camera();
-        clear_background(WHITE);
-        gl_use_material(&material);
-        draw_texture_ex(&render_target.texture, 0., 0., WHITE, DrawTextureParams {
-            // dest_size: Some(vec2(screen_width(), screen_height())),
-            ..Default::default()
-        });
-        gl_use_default_material();
+        
         next_frame().await;
     }
 }
@@ -347,8 +336,11 @@ void DrawVignette( inout vec3 color, vec2 uv )
 void DrawScanline( inout vec3 color, vec2 uv )
 {
     float iTime = 0.1;
-    float scanline 	= clamp( 0.95 + 0.05 * cos( 3.14 * ( uv.y + 0.008 * iTime ) * 240.0 * 1.0 ), 0.0, 1.0 );
-    float grille 	= 0.85 + 0.15 * clamp( 1.5 * cos( 3.14 * uv.x * 640.0 * 1.0 ), 0.0, 1.0 );
+        // float scanline 	= clamp( 0.95 + 0.05 * cos( 3.14 * ( uv.y + 0.008 * iTime ) * 240.0 * 1.0 ), 0.0, 1.0 );
+    float scanline 	= 0.85 + 0.15 * clamp( 1.5 * cos( 3.14 * uv.y * 720.0 / 2.0 * 1.0 ), 0.0, 1.0 );
+    float grille 	= 0.85 + 0.15 * clamp( 1.5 * cos( 3.14 * uv.x * 1280.0 / 2.0 * 1.0 ), 0.0, 1.0 );
+    // float scanline 	= clamp( 0.95 + 0.05 * cos( 3.14 * ( uv.y + 0.008 * iTime ) * 240.0 * 1.0 ), 0.0, 1.0 );
+    // float grille 	= 0.85 + 0.15 * clamp( 1.5 * cos( 3.14 * uv.x * 640.0 * 1.0 ), 0.0, 1.0 );
     color *= scanline * grille * 1.2;
 }
 

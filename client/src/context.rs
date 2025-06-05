@@ -1,5 +1,5 @@
 use macroquad::{
-    math::Vec2, miniquad::gl::glFlush, text::{draw_text_ex, load_ttf_font, Font, TextParams}, time::get_time, window::{next_frame, screen_height, screen_width}
+    math::Vec2, text::{load_ttf_font, Font}, time::get_time, window::{screen_height, screen_width}
 };
 
 use crate::{

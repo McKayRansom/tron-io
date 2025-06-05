@@ -1,7 +1,15 @@
 use macroquad::{
-    color::Color, math::{Rect, Vec2}, prelude::{collections::storage, gl_use_default_material, gl_use_material, Material}, shapes::{draw_line, draw_rectangle, draw_rectangle_lines}, window::{screen_height, screen_width}
+    camera::{Camera2D, set_camera, set_default_camera},
+    color::{Color, WHITE},
+    math::{Rect, Vec2, vec2},
+    prelude::{collections::storage, gl_use_default_material, gl_use_material},
+    shapes::{draw_line, draw_rectangle, draw_rectangle_lines},
+    texture::{DrawTextureParams, draw_texture_ex, render_target},
+    window::{clear_background, screen_height, screen_width},
 };
 use tron_io_world::grid::{Cell, Grid, Point, SQUARES};
+
+use crate::BACKGROUND_COLOR;
 
 pub fn cell_color(cell: &Cell) -> Color {
     let mut color = crate::colors::get_color(cell.get_color());
@@ -43,10 +51,7 @@ impl GridDrawInfo {
     }
 
     pub fn grid_to_screen(&self, pos: Point) -> Vec2 {
-        Vec2::new(
-            self.offset_x + pos.0 as f32 * self.sq_size,
-            self.offset_y + pos.1 as f32 * self.sq_size,
-        )
+        Vec2::new(MARGIN + pos.0 as f32 * self.sq_size, MARGIN + pos.1 as f32 * self.sq_size)
     }
     // pub fn screen_to_grid(&self, pos: Vec2) -> Point {
     //     let x = ((pos.x - self.offset_x) / self.sq_size).round() as i16;
@@ -61,20 +66,35 @@ pub fn draw_grid(grid: &Grid) {
     // gl_use_material(&storage::get::<Material>());
 
     let draw_info = GridDrawInfo::new();
-    draw_rectangle(
-        draw_info.offset_x - MARGIN,
-        draw_info.offset_y - MARGIN,
-        draw_info.game_size + MARGIN * 2.,
-        draw_info.game_size + MARGIN * 2.,
-        // Color::from_hex(0x020a13),
-        Color {
-            r: 0.03,
-            g: 0.03,
-            b: 0.03,
-            a: 1.0,
-        },
-        // Color { r: 0.30, g: 0.30, b: 0.30, a: 1.0 },
-    );
+
+    let viewport_size =  screen_width().min(screen_height());
+
+    let camera = Camera2D {
+        zoom: vec2(2.0 / viewport_size,  2.0 / viewport_size),
+        target: vec2(viewport_size / 2., viewport_size / 2.),
+        render_target: Some(render_target(
+            viewport_size as u32,
+            viewport_size as u32,
+        )),
+        ..Default::default()
+    };
+    set_camera(&camera);
+    clear_background(BACKGROUND_COLOR);
+
+    // draw_rectangle(
+    //     draw_info.offset_x - MARGIN,
+    //     draw_info.offset_y - MARGIN,
+    //     draw_info.game_size + MARGIN * 2.,
+    //     draw_info.game_size + MARGIN * 2.,
+    //     // Color::from_hex(0x020a13),
+    //     Color {
+    //         r: 0.13,
+    //         g: 0.13,
+    //         b: 0.13,
+    //         a: 1.0,
+    //     },
+    //     // Color { r: 0.30, g: 0.30, b: 0.30, a: 1.0 },
+    // );
 
     const GRID_LINE_COLOR: macroquad::color::Color = macroquad::color::colors::GRAY;
     const GRID_LINE_THICKNESS: f32 = 2.;
@@ -121,6 +141,22 @@ pub fn draw_grid(grid: &Grid) {
             }
         }
     }
+
+    set_default_camera();
+    // clear_background(WHITE);
+
+    let material = storage::get();
+    gl_use_material(&material);
+    draw_texture_ex(
+        &camera.render_target.unwrap().texture,
+        (screen_width() - viewport_size) / 2.,
+        (screen_height() - viewport_size) / 2.,
+        WHITE,
+        DrawTextureParams {
+            // dest_size: Some(vec2(screen_width(), screen_height())),
+            ..Default::default()
+        },
+    );
     gl_use_default_material();
 }
 
