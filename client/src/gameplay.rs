@@ -4,11 +4,12 @@ use macroquad::audio::PlaySoundParams;
 use macroquad::color::colors;
 use macroquad::prelude::*;
 use tron_io_world::client::{WorldClient, WorldEvent};
+use tron_io_world::grid::bike::{FLAG_BOOST, FLAG_SHOOT};
 use tron_io_world::local::WorldClientLocal;
 use tron_io_world::{GridOptions, WorldState};
 
 use crate::colors::get_team_color;
-use crate::context::Context;
+use crate::context::{Context, GRID_VIEWPORT_SIZE, VIRTUAL_HEIGHT, VIRTUAL_WIDTH};
 use crate::draw::{draw_grid, draw_rect, draw_rect_lines};
 use crate::input::InputType;
 use crate::scene::Scene;
@@ -56,14 +57,16 @@ impl Scene for Gameplay {
                 WorldEvent::PlayerJoin => ctx.audio.play_sfx(SoundFx::MenuSelect),
                 WorldEvent::PlayerReady => ctx.audio.play_sfx(SoundFx::MenuSelect),
                 WorldEvent::LocalUpdate(bike_update) => {
-                    if bike_update.boost {
-                        // ctx.audio.play_sfx(SoundFx::Boost);
+                    if bike_update.flags & FLAG_SHOOT != 0 {
                         ctx.audio.play_sfx(SoundFx::Turn);
-                    } else {
-                        // THIS IS SUPER ANNOYING
-                        // turn SFX
-                        // ctx.audio.play_sfx(SoundFx::Turn);
                     }
+                    if bike_update.flags & FLAG_BOOST != 0 {
+                        ctx.audio.play_sfx(SoundFx::Boost);
+                    }
+                    // THIS IS SUPER ANNOYING
+                    // turn SFX
+                    // ctx.audio.play_sfx(SoundFx::Turn);
+                    // }
                 }
                 WorldEvent::GameState(world_state) => match world_state {
                     WorldState::Waiting => {}
@@ -94,18 +97,18 @@ impl Scene for Gameplay {
                     for update in &grid_update_msg.updates {
                         // only do these for remote players, local players are played immedialty
                         if self.client.local_player(update.id).is_none() {
-                            if update.boost {
+                            if update.flags & FLAG_SHOOT != 0 {
                                 ctx.audio.play_sfx_ex(SoundFx::Turn, PlaySoundParams {
                                     looped: false,
                                     volume: 0.5,
                                 });
-                            } else {
-                                // turn SFX
-                                // ctx.audio.play_sfx_ex(SoundFx::Turn, PlaySoundParams {
-                                //     looped: false,
-                                //     volume: 0.5,
-                                // });
                             }
+                            // if update.flags & FLAG_BOOST == 0 {
+                            //     ctx.audio.play_sfx_ex(SoundFx::Boost, PlaySoundParams {
+                            //         looped: false,
+                            //         volume: 0.5,
+                            //     });
+                            // }
                         }
                     }
                 }
@@ -122,63 +125,94 @@ impl Scene for Gameplay {
     }
 
     fn draw(&mut self, ctx: &mut Context) {
-        
-
-        draw_grid(&self.client.grid);
+        draw_grid(&self.client.grid, ctx);
 
         // draw players in corners
         for i in 0..4 {
             const PLAYER_EDGE_SPACING: f32 = 24.;
             let pos = match i {
                 0 => vec2(PLAYER_EDGE_SPACING, PLAYER_EDGE_SPACING),
-                1 => vec2(ctx.screen_size.x - PLAYER_EDGE_SPACING, PLAYER_EDGE_SPACING),
-                2 => vec2(PLAYER_EDGE_SPACING, ctx.screen_size.y - PLAYER_EDGE_SPACING),
+                1 => vec2(VIRTUAL_WIDTH - PLAYER_EDGE_SPACING, PLAYER_EDGE_SPACING),
+                2 => vec2(PLAYER_EDGE_SPACING, VIRTUAL_HEIGHT - PLAYER_EDGE_SPACING),
                 3 => vec2(
-                    ctx.screen_size.x - PLAYER_EDGE_SPACING,
-                    ctx.screen_size.y - PLAYER_EDGE_SPACING,
+                    VIRTUAL_WIDTH - PLAYER_EDGE_SPACING,
+                    VIRTUAL_HEIGHT - PLAYER_EDGE_SPACING,
                 ),
                 _ => unreachable!(),
             };
-            let (text, color) = if let Some(player) = self.client.local_players.get(i) {
-                (
-                    match self.client.game_state {
-                        WorldState::Playing => format!(
-                            "{} boost: {} ",
-                            player.name,
-                            "O".repeat(
-                                self.client.grid.bikes
-                                    [self.client.server_player(i as u8).unwrap() as usize]
-                                    .boost_count as usize
-                            )
-                        ),
-                        _ => format!("{} ready: {} ", player.name, player.ready),
-                        // WorldState::RoundOver(_) => todo!(),
-                        // WorldState::GameOver(_) => todo!(),
-                    },
-                    get_color(
-                        self.client.grid.bikes
-                            [self.client.server_player(i as u8).unwrap_or(0) as usize]
-                            .get_color(),
+            let (mut text_val, mut color, mut alive) =
+                ("[A/ENTER/LSHIFT] to join".to_string(), colors::WHITE, false);
+            if let Some(player) = self.client.local_players.get(i) {
+                let bike = &self.client.grid.bikes
+                    [self.client.server_player(i as u8).unwrap_or(0) as usize];
+                text_val = match self.client.game_state {
+                    WorldState::Playing => format!(
+                        "{} boost: {} gun: {}",
+                        player.name,
+                        "O".repeat(bike.boost_count as usize),
+                        "O".repeat(bike.bullet_count as usize)
                     ),
-                )
-            } else if self.client.game_state == WorldState::Waiting {
-                ("[A/ENTER/LSHIFT] to join".into(), colors::WHITE)
-            } else {
+                    _ => format!(
+                        "{} {} ",
+                        player.name,
+                        if player.ready {
+                            "READY"
+                        } else {
+                            "Press confirm to ready up"
+                        }
+                    ),
+                };
+                color = get_color(bike.get_color());
+                alive = bike.alive;
+            } else if self.client.game_state != WorldState::Waiting {
                 continue;
-            };
-            let measure = measure_text(ctx, &text, text::Size::Small);
-            draw_text(
-                ctx,
-                &text,
+            }
+
+            let measure = measure_text(ctx, &text_val, text::Size::Small);
+            draw_text_ex(
+                &text_val,
                 if i % 2 == 0 {
                     pos.x
                 } else {
                     pos.x - measure.width
                 },
                 pos.y,
-                text::Size::Small,
-                color,
+                TextParams {
+                    font: if alive {
+                        Some(&ctx.font)
+                    } else {
+                        Some(&ctx.font_line)
+                    },
+                    color: color,
+                    font_size: text_size(text::Size::Small),
+                    ..Default::default()
+                },
             );
+            if let Some((input_type, _player)) =
+                self.input_map.iter().find(|item| *item.1 == i as u8)
+            {
+                let text = input_type.help();
+                let measure = measure_text(ctx, &text, text::Size::Small);
+                draw_text_ex(
+                    &text,
+                    if i % 2 == 0 {
+                        pos.x 
+                    } else {
+                        pos.x - measure.width
+                    } + 10.,
+                    pos.y + measure.height,
+                    TextParams {
+                        font: if alive {
+                            Some(&ctx.font)
+                        } else {
+                            Some(&ctx.font_line)
+                        },
+                        color: color,
+                        font_size: text_size(text::Size::Small),
+                        ..Default::default()
+                    },
+                );
+            }
         }
 
         // draw game over
@@ -186,10 +220,10 @@ impl Scene for Gameplay {
             self.client.game_state,
             WorldState::GameOver(_) | WorldState::Waiting | WorldState::RoundOver(_)
         ) {
-            let size: f32 = ctx.screen_size.min_element();
+            let size: f32 = GRID_VIEWPORT_SIZE;
             draw_rectangle(
-                (ctx.screen_size.x - size) / 2.,
-                (ctx.screen_size.y - size) / 2.,
+                (VIRTUAL_WIDTH - size) / 2.,
+                (VIRTUAL_HEIGHT - size) / 2.,
                 size,
                 size,
                 Color {
@@ -213,10 +247,9 @@ impl Scene for Gameplay {
                     // },
                     "Press [enter] to reboot or [delete] to exit.".into(),
                 ),
-                WorldState::Waiting => (
-                    "Game Lobby".into(),
-                    "Press [A/ENTER/LSHIFT] to join".into(),
-                ),
+                WorldState::Waiting => {
+                    ("Game Lobby".into(), "Press [A/ENTER/LSHIFT] to join".into())
+                }
                 WorldState::RoundOver(winner) => (
                     if let Some(winner) = winner {
                         let (team_color, name) = get_team_color(winner);
@@ -230,7 +263,7 @@ impl Scene for Gameplay {
                 _ => unreachable!(),
             };
 
-            let mut pos: Vec2 = vec2(ctx.screen_size.x / 2., 200.);
+            let mut pos: Vec2 = vec2(VIRTUAL_WIDTH / 2., 200.);
 
             draw_text_screen_centered(&ctx, text.as_str(), pos.y, text::Size::Medium, color);
             pos.y += 100.;

@@ -1,4 +1,7 @@
-use crate::{grid::{Grid, Point}, AiDifficulty};
+use crate::{
+    AiDifficulty,
+    grid::{Grid, Point},
+};
 
 use super::*;
 
@@ -27,7 +30,7 @@ pub const DIRS_REV: &[Point] = &[RIGHT, LEFT, DOWN, UP];
 
 // impl AiPathGrid {
 //     pub fn create(grid: &Grid) -> Self {
-        
+
 //     }
 // }
 
@@ -51,9 +54,9 @@ impl Bike {
                 if !grid.occupied.is_occupied(new_head) {
                     if self.dir != *dir {
                         return Some(BikeUpdate {
-                            boost: false,
                             id: self.id,
                             dir: *dir,
+                            flags: 0,
                         });
                     } else {
                         return None;
@@ -138,7 +141,7 @@ impl Bike {
                     id: self.id,
                     dir,
                     // boost: false,
-                    boost,
+                    flags: if boost { FLAG_BOOST } else { 0 },
                 });
             }
         }

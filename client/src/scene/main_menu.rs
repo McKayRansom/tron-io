@@ -1,8 +1,8 @@
 // use super::settings::Settings;
 use super::Scene;
 // use crate::consts::*;
-use crate::context::Context;
-use crate::text::{self, draw_text};
+use crate::context::{Context, VIRTUAL_HEIGHT};
+use crate::text::{self, draw_text, draw_text_screen_centered};
 use crate::ui::menu::{Menu};
 use credits::Credits;
 use game_options::GameOptionsScene;
@@ -63,14 +63,13 @@ impl Scene for MainMenu {
             return;
         }
 
-        draw_text(
+        draw_text_screen_centered(
             ctx,
             if self.lobby.is_some() {
                 "Tron-IO/Menu/Online"
             } else {
                 "Tron-IO/Menu"
             },
-            X_INSET,
             TITLE_Y_INSET,
             text::Size::Large,
             colors::WHITE,
@@ -113,7 +112,7 @@ impl Scene for MainMenu {
             ctx,
             "Change Select = [arrow keys] or [WASD] | Confirm = [Enter] or [LSHIFT]",
             X_INSET,
-            ctx.screen_size.y - 40.,
+            VIRTUAL_HEIGHT - 40.,
             text::Size::Small,
             colors::WHITE,
         );
@@ -122,7 +121,7 @@ impl Scene for MainMenu {
             ctx,
             format!("v{}", crate::VERSION).as_str(),
             40.,
-            ctx.screen_size.y - 40.,
+            VIRTUAL_HEIGHT - 40.,
             text::Size::Small,
             colors::WHITE,
         );

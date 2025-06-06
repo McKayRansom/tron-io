@@ -1,10 +1,9 @@
-use std::collections::VecDeque;
 
 use nanoserde::{DeBin, SerBin};
 
 use crate::{
     Action,
-    grid::{Point, team_to_color},
+    grid::{Bullet, Point, team_to_color},
 };
 
 use super::Occupied;
@@ -58,16 +57,15 @@ pub fn add(dir: Point, dir2: Point) -> Point {
 pub struct BikeUpdate {
     pub id: u8,
     pub dir: Point,
-    pub boost: bool,
+    pub flags: u8,
 }
+
+pub const FLAG_BOOST: u8 = 1;
+pub const FLAG_SHOOT: u8 = 2;
 
 impl BikeUpdate {
     pub fn new(id: u8, dir: Point) -> Self {
-        Self {
-            id,
-            dir,
-            boost: false,
-        }
+        Self { id, dir, flags: 0 }
     }
 }
 
@@ -96,8 +94,8 @@ type Ticks = u8;
 
 pub const BOOST_COUNT: u8 = 3;
 pub const BOOST_TIME: Ticks = 20;
+pub const BULLET_COUNT: u8 = 3;
 
-// TODO: Are these off by one?
 const BOOST_SPEED: Ticks = 0;
 const NORMAL_SPEED: Ticks = 1;
 
@@ -113,10 +111,7 @@ pub struct Bike {
     speed: Ticks,
     pub boost_time: Ticks,
     pub boost_count: u8,
-
-    pub length: u8,
-    pub segments: VecDeque<Point>,
-    // try shooting
+    pub bullet_count: u8,
 }
 
 impl Bike {
@@ -135,8 +130,7 @@ impl Bike {
             speed: 0,
             boost_time: 0,
             boost_count: BOOST_COUNT,
-            length: 64,
-            segments: VecDeque::new(),
+            bullet_count: BULLET_COUNT,
         }
     }
 
@@ -158,7 +152,17 @@ impl Bike {
                 return Some(BikeUpdate {
                     id: self.id,
                     dir: self.dir,
-                    boost: true,
+                    flags: FLAG_BOOST,
+                });
+            }
+            Action::Cancel => {
+                if self.bullet_count == 0 {
+                    return None;
+                }
+                return Some(BikeUpdate {
+                    id: self.id,
+                    dir: self.dir,
+                    flags: FLAG_SHOOT,
                 });
             }
             _ => return None,
@@ -170,16 +174,22 @@ impl Bike {
         Some(BikeUpdate {
             id: self.id,
             dir: new_dir,
-            boost: false,
+            flags: 0,
         })
     }
 
-    pub fn apply_update(&mut self, update: &BikeUpdate) {
+    pub fn apply_update(&mut self, update: &BikeUpdate) -> Option<Bullet> {
         self.dir = update.dir;
-        // if update.boost && self.boost_count > 0 && self.boost_time == 0 {
-        //     self.boost_time = BOOST_TIME;
-        //     self.boost_count -= 1;
-        // }
+        if update.flags & FLAG_BOOST != 0 && self.boost_count > 0 && self.boost_time == 0 {
+            self.boost_time = BOOST_TIME;
+            self.boost_count -= 1;
+        }
+        if update.flags & FLAG_SHOOT != 0 && self.bullet_count > 0 {
+            self.bullet_count -= 1;
+            Some(Bullet::new(self.head, self.dir, self.get_color()))
+        } else {
+            None
+        }
     }
 
     /// returns true if the bike just died
@@ -193,9 +203,7 @@ impl Bike {
         } else {
             self.speed = if self.boost_time > 0 {
                 self.boost_time -= 1;
-                // BOOST_SPEED
-                // hijack boosting to shoot!
-                NORMAL_SPEED
+                BOOST_SPEED
             } else {
                 NORMAL_SPEED
             };
@@ -209,20 +217,12 @@ impl Bike {
 
         let new_head = (self.head.0 + self.dir.0, self.head.1 + self.dir.1);
 
-        if grid.occupy(new_head, self.color, false) {
+        if grid.occupy(new_head, self.color, self.boost_time > 0) {
             self.alive = false;
             // explode the old head so it's clear we died
             grid.explose(self.head);
             true
         } else {
-            // self.segments.push_front(self.head);
-            // log::info!("Pushing segment {:?}", self.head);
-            // while self.segments.len() > self.length as usize {
-            //     if let Some(end) = self.segments.pop_back() {
-            //         // log::info!("Poping segment {:?}", end);
-            //         grid.free_for_read(end);
-            //     }
-            // }
             self.head = new_head;
             false
         }

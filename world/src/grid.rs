@@ -3,7 +3,7 @@ use std::hash::{DefaultHasher, Hash, Hasher};
 use bike::{Bike, BikeUpdate};
 use nanoserde::{DeBin, SerBin};
 
-use crate::{AiDifficulty, GridOptions, GridSize, client::WorldEvent};
+use crate::{client::WorldEvent, grid::bike::{DOWN, LEFT, RIGHT, UP}, AiDifficulty, GridOptions, GridSize};
 
 pub mod bike;
 
@@ -149,7 +149,7 @@ impl Occupied {
         self.occupied[pos.1 as usize][pos.0 as usize].explode();
     }
 
-    fn free_for_read(&mut self, pos: (i16, i16)) {
+    fn clear(&mut self, pos: (i16, i16)) {
         if pos.0 < 0 || pos.1 < 0 || pos.0 >= self.size.0 || pos.1 >= self.size.1 {
             return;
         }
@@ -261,14 +261,8 @@ impl Grid {
         // tick and seed?
         for update in updates.updates.iter() {
             let bike = self.bikes.get_mut(update.id as usize).unwrap();
-            bike.apply_update(update);
-            if update.boost && bike.length > 0 {
-                if let Some(bullet) =
-                    Bullet::new(&mut self.occupied, bike.head, bike.dir, bike.get_color())
-                {
-                    self.bullets.push(bullet);
-                    bike.length -= 1;
-                }
+            if let Some(bullet) = bike.apply_update(update) {
+                self.bullets.push(bullet);
             }
         }
         if self.tick != updates.tick {
@@ -281,38 +275,54 @@ impl Grid {
 }
 
 pub struct Bullet {
+    splode_delay: u8,
     pos: Point,
     dir: Point,
     color: u8,
 }
 
+const SPLODE_TIME: u8 = 8;
+
 impl Bullet {
-    pub fn new(occupied: &mut Occupied, from_pos: Point, dir: Point, color: u8) -> Option<Self> {
-        let mut bullet = Bullet {
-            pos: from_pos,
+    pub fn new(from_pos: Point, dir: Point, color: u8) -> Self {
+        Bullet {
+            splode_delay: 0,
+            pos: point_add(from_pos, dir),
             dir,
             color,
-        };
-        bullet.pos = point_add(bullet.pos, bullet.dir);
-        if occupied.occupy(bullet.pos, bullet.color, true) {
-            // laser hit something?
-            occupied.free_for_read(bullet.pos);
-            return None;
-        } else {
-            return Some(bullet);
         }
     }
 
     pub fn update(&mut self, occupied: &mut Occupied) -> bool {
         // self.laser = self.head + self.dir + self.dir;
-        occupied.free_for_read(self.pos);
-        self.pos = point_add(self.pos, self.dir);
-        if occupied.occupy(self.pos, self.color, true) {
-            // laser hit something?
-            occupied.free_for_read(self.pos);
-            false
-        } else {
+        if self.splode_delay == 0 {
+            occupied.clear(self.pos);
+            self.pos = point_add(self.pos, self.dir);
+            if occupied.occupy(self.pos, self.color, true) {
+                // we hit something
+                self.splode_delay = 1;
+                occupied.explose(self.pos);
+            } 
             true
+        } else {
+            self.splode_delay += 1;
+            if self.splode_delay > SPLODE_TIME / 2 {
+                // explode a large area
+                occupied.explose(point_add(self.pos, LEFT));
+                occupied.explose(point_add(self.pos, RIGHT));
+                occupied.explose(point_add(self.pos, UP));
+                occupied.explose(point_add(self.pos, DOWN));
+            }
+            if self.splode_delay > SPLODE_TIME {
+                occupied.clear(self.pos);
+                occupied.clear(point_add(self.pos, LEFT));
+                occupied.clear(point_add(self.pos, RIGHT));
+                occupied.clear(point_add(self.pos, UP));
+                occupied.clear(point_add(self.pos, DOWN));
+                false
+            } else {
+                true
+            }
         }
     }
 }

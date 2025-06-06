@@ -5,6 +5,7 @@ use super::TITLE_Y_INSET;
 // use super::VIRTUAL_HEIGHT;
 use super::X_INSET;
 use crate::audio::SoundFx;
+use crate::context::VIRTUAL_HEIGHT;
 // use crate::input::action_pressed;
 use crate::text::Size;
 use crate::ui::menu::MENU_SPACING;
@@ -49,7 +50,7 @@ impl Credits {
             ctx,
             "Press any button to return",
             X_INSET,
-            ctx.screen_size.y - 120.,
+            VIRTUAL_HEIGHT - 120.,
             Size::Small,
             colors::WHITE,
         );

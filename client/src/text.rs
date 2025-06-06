@@ -9,7 +9,7 @@ pub enum Size {
 use macroquad::color::Color;
 use macroquad::text::{draw_text_ex, TextDimensions, TextParams};
 
-use crate::context::Context;
+use crate::context::{Context, VIRTUAL_WIDTH};
 
 /// draw the text to the screen, simpler API than Macroquad's with a default font and enum for size
 pub fn draw_text(ctx: &Context, text: &str, x: f32, y: f32, size: Size, color: Color) {
@@ -27,7 +27,7 @@ pub fn draw_text_screen_centered(ctx: &Context, text: &str, y: f32, size: Size, 
     draw_text(
         ctx,
         text,
-        (ctx.screen_size.x - text_size.width) / 2.,
+        (VIRTUAL_WIDTH - text_size.width) / 2.,
         y,
         size,
         color,

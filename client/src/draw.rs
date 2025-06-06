@@ -1,17 +1,16 @@
 use macroquad::{
-    camera::{set_camera, set_default_camera, Camera2D},
+    camera::{pop_camera_state, push_camera_state, set_camera, Camera2D},
     color::{Color, WHITE},
     math::{vec2, Rect, Vec2},
-    prelude::{collections::storage, gl_use_default_material, gl_use_material},
     shapes::{draw_line, draw_rectangle, draw_rectangle_lines},
     texture::{
-        draw_texture_ex, DrawTextureParams, RenderTarget
+        draw_texture_ex, DrawTextureParams
     },
-    window::{clear_background, screen_height, screen_width},
+    window::clear_background,
 };
 use tron_io_world::grid::{Cell, Grid, Point};
 
-use crate::BACKGROUND_COLOR;
+use crate::{context::{Context, VIRTUAL_HEIGHT, VIRTUAL_WIDTH}, BACKGROUND_COLOR};
 
 pub fn cell_color(cell: &Cell) -> Color {
     if cell.is_exploded() {
@@ -33,26 +32,26 @@ pub fn cell_color(cell: &Cell) -> Color {
 
 pub struct GridDrawInfo {
     game_size: f32,
-    offset_x: f32,
-    offset_y: f32,
+    // _offset_x: f32,
+    // _offset_y: f32,
     sq_size: f32,
 }
 
 const MARGIN: f32 = 10.;
 
-const VIEWPORT_SIZE: f32 = 1024.;
+pub const VIEWPORT_SIZE: f32 = VIRTUAL_HEIGHT;
 
 impl GridDrawInfo {
     pub fn new(grid: &Grid) -> Self {
         let game_size = VIEWPORT_SIZE - MARGIN * 2.;
-        let offset_x = (screen_width() - game_size) / 2.;
-        let offset_y = (screen_height() - game_size) / 2.;
+        // let offset_x = (screen_width() - game_size) / 2.;
+        // let offset_y = (screen_height() - game_size) / 2.;
         let sq_size = game_size /grid.size().0 as f32;
 
         Self {
             game_size,
-            offset_x,
-            offset_y,
+            // _offset_x: offset_x,
+            // _offset_y: offset_y,
             sq_size,
         }
     }
@@ -70,21 +69,22 @@ impl GridDrawInfo {
     // }
 }
 
-pub fn draw_grid(grid: &Grid) {
+pub fn draw_grid(grid: &Grid, ctx: &Context) {
     // draw with CRT?
     // TODO: Draw entire thing at once to camera buf!
     // gl_use_material(&storage::get::<Material>());
 
     let draw_info = GridDrawInfo::new(grid);
 
-    let view_area = screen_height().min(screen_width());
+    let view_area = f32::min(VIRTUAL_WIDTH, VIRTUAL_HEIGHT);
 
     let camera = Camera2D {
         zoom: vec2(2.0 / VIEWPORT_SIZE, 2.0 / VIEWPORT_SIZE),
         target: vec2(VIEWPORT_SIZE / 2., VIEWPORT_SIZE / 2.),
-        render_target: Some(storage::get::<RenderTarget>().clone()),
+        render_target: Some(ctx.grid_render_target.clone()),
         ..Default::default()
     };
+    push_camera_state();
     set_camera(&camera);
     clear_background(BACKGROUND_COLOR);
 
@@ -150,22 +150,22 @@ pub fn draw_grid(grid: &Grid) {
         }
     }
 
-    set_default_camera();
-    // clear_background(WHITE);
 
-    let material = storage::get();
-    gl_use_material(&material);
+    // gl_use_material(&ctx.crt_material);
+    // set_default_camera();
+    pop_camera_state();
+    // clear_background(WHITE);
     draw_texture_ex(
         &camera.render_target.unwrap().texture,
-        (screen_width() - view_area) / 2.,
-        (screen_height() - view_area) / 2.,
+        (VIRTUAL_WIDTH - view_area) / 2.,
+        (VIRTUAL_HEIGHT - view_area) / 2.,
         WHITE,
         DrawTextureParams {
             dest_size: Some(vec2(view_area, view_area)),
             ..Default::default()
         },
     );
-    gl_use_default_material();
+    // gl_use_default_material();
 }
 
 pub fn draw_rect(rect: Rect, color: Color) {

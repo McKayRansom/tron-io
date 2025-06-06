@@ -80,7 +80,7 @@ impl Menu {
         //     &self.text
         // };
 
-        text::draw_text(ctx, name, self.pos.x, self.pos.y, text::Size::Medium, color);
+        text::draw_text_screen_centered(ctx, name, self.pos.y, text::Size::Medium, color);
 
         self.pos.y += MENU_SPACING;
         self.current += 1;

@@ -12,6 +12,18 @@ pub enum InputType {
     VirtualTouch,
 }
 
+impl InputType {
+    pub fn help(&self) -> &'static str {
+        match self {
+            InputType::Keyboard(0) => "[WASD] to move, [LSHIFT] to confirm/boost, [???] to back/shoot",
+            InputType::Keyboard(1) => "[ARROWS] to move, [???] to configm/boost, [???] to back/shoot",
+            InputType::Gamepad(_gamepad_id) => "Gamepad TBD",
+            InputType::VirtualTouch => "Virtual touch",
+            _ => "Unkown input type",
+        }
+    }
+}
+
 
 pub struct InputContext {
     pub actions: Vec<(Action, InputType)>,
@@ -35,14 +47,14 @@ impl InputContext {
             KeyCode::A => Some((Action::Left, 0)),
             KeyCode::D => Some((Action::Right, 0)),
             KeyCode::Z => Some((Action::Rewind, 0)),
-            KeyCode::L | KeyCode::C => Some((Action::Reset, 0)),
+            KeyCode::L => Some((Action::Reset, 0)),
             KeyCode::LeftShift | KeyCode::J => Some((Action::Confirm, 0)),
             KeyCode::Enter | KeyCode::X  => Some((Action::Confirm, 1)),
             KeyCode::Up => Some((Action::Up, 1)),
             KeyCode::Down => Some((Action::Down, 1)),
             KeyCode::Left => Some((Action::Left, 1)),
             KeyCode::Right => Some((Action::Right, 1)),
-            KeyCode::K | KeyCode::Delete | KeyCode::Backspace => Some((Action::Cancel, 0)),
+            KeyCode::C | KeyCode::Delete | KeyCode::Backspace => Some((Action::Cancel, 1)),
             _ => None,
         }
     }
