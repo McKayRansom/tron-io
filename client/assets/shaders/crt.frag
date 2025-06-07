@@ -29,8 +29,8 @@ void DrawScanline( inout vec3 color, vec2 uv )
 {
     float iTime = 0.1;
         // float scanline 	= clamp( 0.95 + 0.05 * cos( 3.14 * ( uv.y + 0.008 * iTime ) * 240.0 * 1.0 ), 0.0, 1.0 );
-    float scanline 	= 0.85 + 0.15 * clamp( 1.5 * cos( 3.14 * uv.y * 1024.0 / 2.0 * 1.0 ), 0.0, 1.0 );
-    float grille 	= 0.85 + 0.15 * clamp( 1.5 * cos( 3.14 * uv.x * 1024.0 / 2.0 * 1.0 ), 0.0, 1.0 );
+    float scanline 	= 0.85 + 0.15 * clamp( 1.5 * cos( 3.14 * uv.y * 1080.0 / 2.0 * 1.0 ), 0.0, 1.0 );
+    float grille 	= 0.85 + 0.15 * clamp( 1.5 * cos( 3.14 * uv.x * 1920.0 / 2.0 * 1.0 ), 0.0, 1.0 );
     // float scanline 	= clamp( 0.95 + 0.05 * cos( 3.14 * ( uv.y + 0.008 * iTime ) * 240.0 * 1.0 ), 0.0, 1.0 );
     // float grille 	= 0.85 + 0.15 * clamp( 1.5 * cos( 3.14 * uv.x * 640.0 * 1.0 ), 0.0, 1.0 );
     color *= scanline * grille * 1.2;
@@ -38,7 +38,8 @@ void DrawScanline( inout vec3 color, vec2 uv )
 
 // TODO: I guessed at const is that a real thing
 const float glow_threshold = .5;
-const float glow_distance = 0.0010;
+const float glow_distance_x = 1.0/1920.0;
+const float glow_distance_y = 1.0/1080.0;
 
 void main() {
     // vec2 crtUV = CRTCurveUV(uv);
@@ -51,14 +52,14 @@ void main() {
             // uv_y = (tex_coord.y * size.y) + (glow_size * float(n - 4.5));
             // float h_sum = 0.0;
             vec4 h_sum = vec4(0.0, 0.0, 0.0, 0.0);
-            h_sum += color * texture2D(Texture, uv + vec2(-glow_distance, -glow_distance) * vec2(n, n));
-            h_sum += color * texture2D(Texture, uv + vec2(-glow_distance, 0.0) * vec2(n, n));
-            h_sum += color * texture2D(Texture, uv + vec2(-glow_distance, glow_distance) * vec2(n, n));
-            h_sum += color * texture2D(Texture, uv + vec2(0.0, glow_distance) * vec2(n, n));
-            h_sum += color * texture2D(Texture, uv + vec2(glow_distance, glow_distance) * vec2(n, n));
-            h_sum += color * texture2D(Texture, uv + vec2(glow_distance, 0.0) * vec2(n, n));
-            h_sum += color * texture2D(Texture, uv + vec2(glow_distance, -glow_distance) * vec2(n, n));
-            h_sum += color * texture2D(Texture, uv + vec2(0.0, -glow_distance) * vec2(n, n));
+            h_sum += color * texture2D(Texture, uv + vec2(-glow_distance_x, -glow_distance_y) * vec2(n, n));
+            h_sum += color * texture2D(Texture, uv + vec2(-glow_distance_x, 0.0) * vec2(n, n));
+            h_sum += color * texture2D(Texture, uv + vec2(-glow_distance_x, glow_distance_y) * vec2(n, n));
+            h_sum += color * texture2D(Texture, uv + vec2(0.0, glow_distance_y) * vec2(n, n));
+            h_sum += color * texture2D(Texture, uv + vec2(glow_distance_x, glow_distance_y) * vec2(n, n));
+            h_sum += color * texture2D(Texture, uv + vec2(glow_distance_x, 0.0) * vec2(n, n));
+            h_sum += color * texture2D(Texture, uv + vec2(glow_distance_x, -glow_distance_y) * vec2(n, n));
+            h_sum += color * texture2D(Texture, uv + vec2(0.0, -glow_distance_y) * vec2(n, n));
             // sum += vec4(1.0, 0.0, 0.0, 0.0);
 
             // h_sum += texelFetch(t0, ivec2(uv_x - (4.0 * glow_size), uv_y), 0).a;
