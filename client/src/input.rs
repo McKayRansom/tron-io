@@ -1,5 +1,5 @@
 use gamepads::{GamepadId, Gamepads};
-use macroquad::input::{get_keys_pressed, KeyCode};
+use macroquad::input::{KeyCode, get_keys_pressed};
 
 pub mod virtual_gamepad;
 
@@ -15,15 +15,16 @@ pub enum InputType {
 impl InputType {
     pub fn help(&self) -> &'static str {
         match self {
-            InputType::Keyboard(0) => "[WASD] to move, [LSHIFT] to confirm/boost, [???] to back/shoot",
-            InputType::Keyboard(1) => "[ARROWS] to move, [???] to configm/boost, [???] to back/shoot",
+            InputType::Keyboard(0) => {
+                "[WASD] to move\n[LSHIFT] to confirm/boost\n[???] to back/shoot"
+            }
+            InputType::Keyboard(1) => "[ARROWS] to move\n[X] to confirm/boost\n[C] to back/shoot",
             InputType::Gamepad(_gamepad_id) => "Gamepad TBD",
             InputType::VirtualTouch => "Virtual touch",
             _ => "Unkown input type",
         }
     }
 }
-
 
 pub struct InputContext {
     pub actions: Vec<(Action, InputType)>,
@@ -49,7 +50,7 @@ impl InputContext {
             KeyCode::Z => Some((Action::Rewind, 0)),
             KeyCode::L => Some((Action::Reset, 0)),
             KeyCode::LeftShift | KeyCode::J => Some((Action::Confirm, 0)),
-            KeyCode::Enter | KeyCode::X  => Some((Action::Confirm, 1)),
+            KeyCode::Enter | KeyCode::X => Some((Action::Confirm, 1)),
             KeyCode::Up => Some((Action::Up, 1)),
             KeyCode::Down => Some((Action::Down, 1)),
             KeyCode::Left => Some((Action::Left, 1)),
@@ -74,6 +75,27 @@ impl InputContext {
         }
     }
 
+    fn stick_to_action(stick: (f32, f32)) -> Option<Action> {
+        const DEADZONE: f32 = 0.25;
+        if stick.0.abs() > stick.1.abs() {
+            if stick.0 > DEADZONE {
+                Some(Action::Right)
+            } else if stick.0 < -DEADZONE {
+                Some(Action::Left)
+            } else {
+                None
+            }
+        } else {
+            if stick.1 > DEADZONE {
+                Some(Action::Up)
+            } else if stick.1 < -DEADZONE {
+                Some(Action::Down)
+            } else {
+                None
+            }
+        }
+    }
+
     pub fn update(&mut self) {
         self.actions.clear();
 
@@ -90,8 +112,13 @@ impl InputContext {
         for gamepad in self.gamepads.all() {
             for button in gamepad.all_just_pressed() {
                 if let Some(action) = Self::gamepad_to_action(button) {
-                    self.actions.push((action, InputType::Gamepad(gamepad.id())));
+                    self.actions
+                        .push((action, InputType::Gamepad(gamepad.id())));
                 }
+            }
+            if let Some(action) = Self::stick_to_action(gamepad.left_stick()) {
+                self.actions
+                    .push((action, InputType::Gamepad(gamepad.id())));
             }
         }
     }
