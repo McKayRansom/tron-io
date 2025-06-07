@@ -52,16 +52,16 @@ impl WorldServer {
         }
     }
 
-    pub fn join(&mut self, client_player: &ClientPlayer) -> u8 {
+    pub fn join(&mut self, client_player: &ClientPlayer) -> Option<u8> {
         for (i, player) in self.players.iter_mut().enumerate() {
             if player.is_ai {
                 player.is_ai = false;
                 player.ready = client_player.ready;
                 player.name = client_player.name.clone();
-                return i as u8;
+                return Some(i as u8);
             }
         }
-        panic!("No room to join!");
+        None
     }
 
     pub fn push_update(&mut self, updates: &[BikeUpdate]) {

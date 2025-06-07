@@ -130,7 +130,7 @@ async fn main() {
 
         // regular drawing
         set_default_camera();
-        clear_background(BACKGROUND_COLOR); // Will be the letterbox color
+        clear_background(BLACK); // Will be the letterbox color
 
         // set_ma
 

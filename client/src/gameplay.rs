@@ -13,7 +13,9 @@ use crate::context::{Context, GRID_VIEWPORT_SIZE, VIRTUAL_HEIGHT, VIRTUAL_WIDTH}
 use crate::draw::{draw_grid, draw_rect, draw_rect_lines};
 use crate::input::InputType;
 use crate::scene::Scene;
-use crate::text::{draw_text, draw_text_screen_centered, measure_text, text_size};
+use crate::text::{
+    draw_text, draw_text_centered_pos, draw_text_screen_centered, measure_text, text_size,
+};
 use crate::{audio::SoundFx, colors::get_color};
 use crate::{input, text};
 
@@ -130,7 +132,7 @@ impl Scene for Gameplay {
         // draw players in corners
         for i in 0..4 {
             const PLAYER_EDGE_SPACING: f32 = 24.;
-            let pos = match i {
+            let mut pos = match i {
                 0 => vec2(PLAYER_EDGE_SPACING, PLAYER_EDGE_SPACING),
                 1 => vec2(VIRTUAL_WIDTH - PLAYER_EDGE_SPACING, PLAYER_EDGE_SPACING),
                 2 => vec2(PLAYER_EDGE_SPACING, VIRTUAL_HEIGHT - PLAYER_EDGE_SPACING),
@@ -140,35 +142,39 @@ impl Scene for Gameplay {
                 ),
                 _ => unreachable!(),
             };
-            let (mut text_val, mut color, mut alive) =
-                ("[A/ENTER/LSHIFT] to join".to_string(), colors::WHITE, false);
+            let (mut text_val, mut color) = ("[A/ENTER/LSHIFT] to join".to_string(), colors::WHITE);
             if let Some(player) = self.client.local_players.get(i) {
                 let bike = &self.client.grid.bikes
                     [self.client.server_player(i as u8).unwrap_or(0) as usize];
                 text_val = match self.client.game_state {
-                    WorldState::Playing => format!(
-                        "{} boost: {} gun: {}",
-                        player.name,
-                        "O".repeat(bike.boost_count as usize),
-                        "O".repeat(bike.bullet_count as usize)
-                    ),
+                    WorldState::Playing => {
+                        if bike.alive {
+                            format!(
+                                "{} boost: {} gun: {}",
+                                player.name,
+                                "O".repeat(bike.boost_count as usize),
+                                "O".repeat(bike.bullet_count as usize)
+                            )
+                        } else {
+                            format!("{} TERMINATED", player.name)
+                        }
+                    }
                     _ => format!(
                         "{} {} ",
                         player.name,
                         if player.ready {
                             "READY"
                         } else {
-                            "Press confirm to ready up"
+                            "Press confirm to ready"
                         }
                     ),
                 };
                 color = get_color(bike.get_color());
-                alive = bike.alive;
             } else if self.client.game_state != WorldState::Waiting {
                 continue;
             }
 
-            let measure = measure_text(ctx, &text_val, text::Size::Small);
+            let measure = measure_text(ctx, &text_val, text::Size::Medium);
             draw_text_ex(
                 &text_val,
                 if i % 2 == 0 {
@@ -178,40 +184,43 @@ impl Scene for Gameplay {
                 },
                 pos.y,
                 TextParams {
-                    font: if alive {
-                        Some(&ctx.font)
-                    } else {
-                        Some(&ctx.font_line)
-                    },
+                    font: Some(&ctx.font),
                     color: color,
-                    font_size: text_size(text::Size::Small),
+                    font_size: text_size(text::Size::Medium),
                     ..Default::default()
                 },
             );
-            if let Some((input_type, _player)) =
-                self.input_map.iter().find(|item| *item.1 == i as u8)
-            {
-                let text = input_type.help();
-                let measure = measure_text(ctx, &text, text::Size::Small);
-                draw_text_ex(
-                    &text,
-                    if i % 2 == 0 {
-                        pos.x 
-                    } else {
-                        pos.x - measure.width
-                    } + 10.,
-                    pos.y + measure.height,
-                    TextParams {
-                        font: if alive {
-                            Some(&ctx.font)
+
+            // draw help indented
+            pos.x += 10.;
+            if self.client.game_state == WorldState::Waiting {
+                if let Some((input_type, _player)) =
+                    self.input_map.iter().find(|item| *item.1 == i as u8)
+                {
+                    for text in input_type.help().lines() {
+                        let measure = measure_text(ctx, &text, text::Size::Medium);
+                        if i < 2 {
+                            pos.y += measure.height * 1.5;
                         } else {
-                            Some(&ctx.font_line)
-                        },
-                        color: color,
-                        font_size: text_size(text::Size::Small),
-                        ..Default::default()
-                    },
-                );
+                            pos.y -= measure.height * 1.5;
+                        }
+                        draw_text_ex(
+                            &text,
+                            if i % 2 == 0 {
+                                pos.x
+                            } else {
+                                pos.x - measure.width
+                            },
+                            pos.y,
+                            TextParams {
+                                font: Some(&ctx.font),
+                                color: color,
+                                font_size: text_size(text::Size::Medium),
+                                ..Default::default()
+                            },
+                        );
+                    }
+                }
             }
         }
 
@@ -247,9 +256,7 @@ impl Scene for Gameplay {
                     // },
                     "Press [enter] to reboot or [delete] to exit.".into(),
                 ),
-                WorldState::Waiting => {
-                    ("Game Lobby".into(), "Press [A/ENTER/LSHIFT] to join".into())
-                }
+                WorldState::Waiting => ("Game Lobby".into(), "Join and select your team".into()),
                 WorldState::RoundOver(winner) => (
                     if let Some(winner) = winner {
                         let (team_color, name) = get_team_color(winner);
@@ -265,13 +272,13 @@ impl Scene for Gameplay {
 
             let mut pos: Vec2 = vec2(VIRTUAL_WIDTH / 2., 200.);
 
-            draw_text_screen_centered(&ctx, text.as_str(), pos.y, text::Size::Medium, color);
+            draw_text_screen_centered(&ctx, text.as_str(), pos.y, text::Size::Large, color);
             pos.y += 100.;
             draw_text_screen_centered(
                 &ctx,
                 subtext.as_str(),
                 pos.y,
-                text::Size::Small,
+                text::Size::Medium,
                 colors::WHITE,
             );
             pos.y += 100.;
@@ -293,7 +300,7 @@ impl Scene for Gameplay {
                     } else {
                         format!("<{}>", player.name)
                     };
-                    draw_text(
+                    draw_text_centered_pos(
                         &ctx,
                         &name,
                         pos.x + TEAM_SPACING * team as f32,

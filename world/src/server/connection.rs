@@ -26,11 +26,14 @@ impl ServerConnectionState {
 
         if self.player_mappings.len() < msg.players.len() {
             for i in self.player_mappings.len()..msg.players.len() {
-                let id = world.join(&msg.players[i]);
-                self.player_mappings.push(id);
-                log::info!("Player {} joined", id);
-                send_response = true;
-                send_options = true;
+                if let Some(id) = world.join(&msg.players[i]) {
+                    self.player_mappings.push(id);
+                    log::info!("Player {} joined", id);
+                    send_response = true;
+                    send_options = true;
+                } else {
+                    log::warn!("No room for player to join!");
+                }
             }
         }
 
@@ -41,7 +44,9 @@ impl ServerConnectionState {
         self.state = msg.state;
 
         for (i, player) in msg.players.iter().enumerate() {
-            send_response |= world.update_player(&mut self.player_mappings[i], player);
+            if let Some(server_player) = self.player_mappings.get_mut(i) {
+                send_response |= world.update_player(server_player, player);
+            }
         }
 
         let last_update = world.get_last_update();

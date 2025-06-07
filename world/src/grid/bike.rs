@@ -179,6 +179,9 @@ impl Bike {
     }
 
     pub fn apply_update(&mut self, update: &BikeUpdate) -> Option<Bullet> {
+        if !self.alive {
+            return None;
+        }
         self.dir = update.dir;
         if update.flags & FLAG_BOOST != 0 && self.boost_count > 0 && self.boost_time == 0 {
             self.boost_time = BOOST_TIME;

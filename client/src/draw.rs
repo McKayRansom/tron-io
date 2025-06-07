@@ -1,16 +1,17 @@
 use macroquad::{
-    camera::{pop_camera_state, push_camera_state, set_camera, Camera2D},
+    camera::{Camera2D, pop_camera_state, push_camera_state, set_camera},
     color::{Color, WHITE},
-    math::{vec2, Rect, Vec2},
-    shapes::{draw_line, draw_rectangle, draw_rectangle_lines},
-    texture::{
-        draw_texture_ex, DrawTextureParams
-    },
+    math::{Rect, Vec2, vec2},
+    shapes::{draw_rectangle, draw_rectangle_lines},
+    texture::{DrawTextureParams, draw_texture_ex},
     window::clear_background,
 };
 use tron_io_world::grid::{Cell, Grid, Point};
 
-use crate::{context::{Context, VIRTUAL_HEIGHT, VIRTUAL_WIDTH}, BACKGROUND_COLOR};
+use crate::{
+    BACKGROUND_COLOR,
+    context::{Context, VIRTUAL_HEIGHT, VIRTUAL_WIDTH},
+};
 
 pub fn cell_color(cell: &Cell) -> Color {
     if cell.is_exploded() {
@@ -46,7 +47,7 @@ impl GridDrawInfo {
         let game_size = VIEWPORT_SIZE - MARGIN * 2.;
         // let offset_x = (screen_width() - game_size) / 2.;
         // let offset_y = (screen_height() - game_size) / 2.;
-        let sq_size = game_size /grid.size().0 as f32;
+        let sq_size = game_size / grid.size().0 as f32;
 
         Self {
             game_size,
@@ -82,10 +83,14 @@ pub fn draw_grid(grid: &Grid, ctx: &Context) {
         zoom: vec2(2.0 / VIEWPORT_SIZE, 2.0 / VIEWPORT_SIZE),
         target: vec2(VIEWPORT_SIZE / 2., VIEWPORT_SIZE / 2.),
         render_target: Some(ctx.grid_render_target.clone()),
+        // camera following the player:
+        // zoom: vec2(4.0 / VIEWPORT_SIZE, 4.0 / VIEWPORT_SIZE),
+        // target: draw_info.grid_to_screen(grid.bikes[0].head),
         ..Default::default()
     };
     push_camera_state();
     set_camera(&camera);
+    // clear_background(colors::BLACK);
     clear_background(BACKGROUND_COLOR);
 
     // draw_rectangle(
@@ -104,35 +109,43 @@ pub fn draw_grid(grid: &Grid, ctx: &Context) {
     // );
 
     const GRID_LINE_COLOR: macroquad::color::Color = macroquad::color::colors::GRAY;
-    const GRID_LINE_THICKNESS: f32 = 2.;
+    const GRID_LINE_THICKNESS: f32 = MARGIN;
     // const GRID_LINE_INTERVAL: i16 = 5;
 
+    draw_rectangle_lines(
+        GRID_LINE_THICKNESS / 2.,
+        GRID_LINE_THICKNESS / 2.,
+        draw_info.game_size + GRID_LINE_THICKNESS,
+        draw_info.game_size + GRID_LINE_THICKNESS,
+        GRID_LINE_THICKNESS,
+        GRID_LINE_COLOR,
+    );
     // draw lines every 4 squares
     let (size_y, size_x) = grid.size();
-    for i in 0..size_x + 1 {
-        if i != 0 && i != size_x {
-            // if i % GRID_LINE_INTERVAL != 0 {
-            continue;
-        }
-        let point_horix = draw_info.grid_to_screen((0, i));
-        draw_line(
-            point_horix.x,
-            point_horix.y,
-            point_horix.x + draw_info.game_size,
-            point_horix.y,
-            GRID_LINE_THICKNESS,
-            GRID_LINE_COLOR,
-        );
-        let point_vert = draw_info.grid_to_screen((i, 0));
-        draw_line(
-            point_vert.x,
-            point_vert.y,
-            point_vert.x,
-            point_vert.y + draw_info.game_size,
-            GRID_LINE_THICKNESS,
-            GRID_LINE_COLOR,
-        );
-    }
+    // for i in 0..size_x + 1 {
+    //     if i != 0 && i != size_x {
+    //     // if i % GRID_LINE_INTERVAL != 0 {
+    //         continue;
+    //     }
+    //     let point_horix = draw_info.grid_to_screen((0, i));
+    //     draw_line(
+    //         point_horix.x,
+    //         point_horix.y,
+    //         point_horix.x + draw_info.game_size,
+    //         point_horix.y,
+    //         GRID_LINE_THICKNESS,
+    //         GRID_LINE_COLOR,
+    //     );
+    //     let point_vert = draw_info.grid_to_screen((i, 0));
+    //     draw_line(
+    //         point_vert.x,
+    //         point_vert.y,
+    //         point_vert.x,
+    //         point_vert.y + draw_info.game_size,
+    //         GRID_LINE_THICKNESS,
+    //         GRID_LINE_COLOR,
+    //     );
+    // }
     // Draw bikes
     // TODO: draw player names, idea: use different fonts to show alive/boost/dead
     for y in 0..size_y {
@@ -149,7 +162,6 @@ pub fn draw_grid(grid: &Grid, ctx: &Context) {
             }
         }
     }
-
 
     // gl_use_material(&ctx.crt_material);
     // set_default_camera();

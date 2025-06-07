@@ -3,8 +3,8 @@ use tron_io_world::{AiDifficulty, GridOptions, GridSize, MAX_TEAMS, MIN_PLAYERS,
 
 use crate::{
     context::Context,
-    scene::{EScene},
-    text::{self, draw_text},
+    scene::EScene,
+    text::{self, draw_text_screen_centered},
     ui::menu::{Menu, MenuAction},
 };
 
@@ -27,10 +27,10 @@ impl GameOptionsScene {
     }
 
     pub fn draw(&mut self, ctx: &mut Context) {
-        draw_text(
+        draw_text_screen_centered(
             ctx,
             "Tron-IO/Menu/GridOptions",
-            X_INSET,
+            // X_INSET,
             TITLE_Y_INSET,
             text::Size::Large,
             colors::WHITE,

@@ -82,7 +82,7 @@ impl Scene for MainMenu {
 
         let mut menu = Menu::new(vec2(X_INSET, MENU_CONTENT_Y), self.selected);
 
-        if menu.option("New Grid", ctx) {
+        if menu.option("Local", ctx) {
             self.options_subscene.active = true;
         }
         if menu.option("Online", ctx) {
@@ -108,10 +108,10 @@ impl Scene for MainMenu {
         //     MenuItem::new("Quit".into(), MenuOption::Quit),
         // ]),
 
-        draw_text(
+        draw_text_screen_centered(
             ctx,
             "Change Select = [arrow keys] or [WASD] | Confirm = [Enter] or [LSHIFT]",
-            X_INSET,
+            // X_INSET,
             VIRTUAL_HEIGHT - 40.,
             text::Size::Small,
             colors::WHITE,

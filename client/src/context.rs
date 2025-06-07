@@ -14,7 +14,7 @@ use crate::{
 pub struct Context {
     pub font: Font,
     // pub font_dot: Font,
-    pub font_line: Font,
+    // pub font_line: Font,
     // pub screen_size: Vec2,
     pub switch_scene_to: Option<EScene>,
     pub request_quit: bool,
@@ -23,7 +23,7 @@ pub struct Context {
     pub time: f64,
     pub settings: GameSettings,
     pub crt_material: Material,
-    pub glow_material: Material,
+    // pub glow_material: Material,
     pub render_target: RenderTarget,
     pub grid_render_target: RenderTarget,
 }
@@ -54,14 +54,14 @@ impl Context {
             // font_dot: load_ttf_font(base_assets_path.join("fonts/edundot.ttf").to_str().unwrap())
             //     .await
             //     .unwrap(),
-            font_line: load_ttf_font(
-                base_assets_path
-                    .join("fonts/edunline.ttf")
-                    .to_str()
-                    .unwrap(),
-            )
-            .await
-            .unwrap(),
+            // font_line: load_ttf_font(
+            //     base_assets_path
+            //         .join("fonts/edunline.ttf")
+            //         .to_str()
+            //         .unwrap(),
+            // )
+            // .await
+            // .unwrap(),
             // screen_size: Vec2::new(0.0, 0.0),
             switch_scene_to: None,
             request_quit: false,
@@ -79,14 +79,14 @@ impl Context {
             )
             .unwrap(),
 
-            glow_material: load_material(
-                ShaderSource::Glsl {
-                    vertex: include_str!("../assets/shaders/crt.vert"),
-                    fragment: include_str!("../assets/shaders/crt.frag"),
-                },
-                Default::default(),
-            )
-            .unwrap(),
+            // glow_material: load_material(
+            //     ShaderSource::Glsl {
+            //         vertex: include_str!("../assets/shaders/crt.vert"),
+            //         fragment: include_str!("../assets/shaders/crt.frag"),
+            //     },
+            //     Default::default(),
+            // )
+            // .unwrap(),
             // TODO: Set filter mode if needed!
             render_target: render_target(VIRTUAL_WIDTH as u32, VIRTUAL_HEIGHT as u32),
             grid_render_target: render_target(GRID_VIEWPORT_SIZE as u32, GRID_VIEWPORT_SIZE as u32),
