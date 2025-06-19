@@ -56,6 +56,7 @@ impl InputContext {
             KeyCode::Left => Some((Action::Left, 1)),
             KeyCode::Right => Some((Action::Right, 1)),
             KeyCode::C | KeyCode::Delete | KeyCode::Backspace => Some((Action::Cancel, 1)),
+            KeyCode::Escape => Some((Action::Pause, 1)),
             _ => None,
         }
     }

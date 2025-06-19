@@ -3,7 +3,7 @@ use macroquad::{color::colors, math::vec2};
 use crate::{
     context::Context,
     settings::{SOUND_MAX, SOUND_MIN},
-    text::{self, draw_text},
+    text::{self, draw_text_screen_centered},
     ui::menu::{Menu, MenuAction},
 };
 
@@ -24,10 +24,10 @@ impl SettingsScene {
     }
 
     pub fn draw(&mut self, ctx: &mut Context) {
-        draw_text(
+        draw_text_screen_centered(
             ctx,
             "Tron-IO/Menu/Settings",
-            X_INSET,
+            // X_INSET,
             TITLE_Y_INSET,
             text::Size::Large,
             colors::WHITE,
