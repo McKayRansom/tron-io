@@ -26,9 +26,9 @@ impl Lobby {
         // return "ws://localhost:8091".to_string();
 
         #[cfg(not(target_arch = "wasm32"))]
-        return "ec2-3-144-4-46.us-east-2.compute.amazonaws.com:8090".to_string();
+        return "game-testing.click:8090".to_string();
         #[cfg(target_arch = "wasm32")]
-        return "ws://ec2-3-144-4-46.us-east-2.compute.amazonaws.com:8091".to_string();
+        return "wss:/game-testing.click/ws".to_string();
     }
 
     pub fn update(&mut self, context: &mut Context) {
